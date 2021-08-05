@@ -1,4 +1,4 @@
-import { LitElement, property } from 'lit-element'
+import { SkhemataBase, property, CSSResult } from '@skhemata/skhemata-base'
 import { 
   SkhemataForm,
   SkhemataFormButton,
@@ -8,12 +8,13 @@ import {
   SkhemataFormAutocomplete,
   SkhemataFormTextarea,
   SkhemataFormQuill,
-} from 'skhemata-form';
+  SkhemataFormRepeat
+} from '@skhemata/skhemata-form';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
-import { Bulma } from 'skhemata-css';
+import { Bulma } from '@skhemata/skhemata-css';
 import { SharedStyles } from '../styles/SharedStyles';
 
-export class SkhemataCrowdfundingManagerSection extends ScopedElementsMixin(LitElement){
+export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
   static get scopedElements(){
     return {
       'sf-form': SkhemataForm,
@@ -23,16 +24,20 @@ export class SkhemataCrowdfundingManagerSection extends ScopedElementsMixin(LitE
       'sf-dropzone': SkhemataFormDropzone,
       'sf-button': SkhemataFormButton,
       'sf-autocomplete': SkhemataFormAutocomplete,
-      'sf-quill': SkhemataFormQuill
+      'sf-quill': SkhemataFormQuill,
+      'sf-repeat': SkhemataFormRepeat
     }
   }
 
-  static get styles(){
-    return [ Bulma, SharedStyles ]
+  static get styles(): CSSResult[] {
+    return <CSSResult[]>[
+      Bulma, SharedStyles
+
+    ];
   }
 
-  @property({ type: String })
-  api = '';
+  // @property({ type: String })
+  // api = '';
 
   @property({ type: Object })
   campaign: any = {}
@@ -49,7 +54,9 @@ export class SkhemataCrowdfundingManagerSection extends ScopedElementsMixin(LitE
   @property({ type: Object })
   translations: any = {};
 
-  firstUpdated(){
+  async firstUpdated(){
+    await super.firstUpdated();
+
     this.form = this.shadowRoot?.getElementById('form');
   }
 }

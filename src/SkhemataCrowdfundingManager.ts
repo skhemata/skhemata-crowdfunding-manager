@@ -1,19 +1,21 @@
-import { html, LitElement, property } from 'lit-element';
-import { Bulma } from 'skhemata-css';
-import { Skhemata } from 'skhemata-api-client';
-import { Campaign } from 'skhemata-api-client/dist/src/Campaign';
+import { html, css, CSSResult, property, SkhemataBase } from '@skhemata/skhemata-base';
 
-export class SkhemataCrowdfundingManager extends LitElement {
+
+import { Bulma } from '@skhemata/skhemata-css';
+import { Skhemata } from '@skhemata/skhemata-api-client-js';
+import { Campaign } from '@skhemata/skhemata-api-client-js/dist/src/Campaign';
+
+export class SkhemataCrowdfundingManager extends SkhemataBase {
 
   @property({ type: Number }) campaignId?: number
 
-  @property({ type: String }) api?: string
+  // @property({ type: String }) api?: string
 
   @property({ type: Campaign }) campaign?: Campaign;
 
   @property({ type: Boolean}) error = false;
 
-  @property({ type: Skhemata }) skhemata?: Skhemata;
+  // @property({ type: Skhemata }) skhemata?: Skhemata;
 
   static styles = [
     Bulma
@@ -96,9 +98,11 @@ export class SkhemataCrowdfundingManager extends LitElement {
     return elements;
   }
 
-  firstUpdated(){
+  async firstUpdated(){
+    await super.firstUpdated();
+
     if(this.api){
-      this.skhemata = new Skhemata(this.api);
+      this.skhemata = new Skhemata(this.api.url);
       this.skhemata.init()
       .then(() => {
         if(this.campaignId){

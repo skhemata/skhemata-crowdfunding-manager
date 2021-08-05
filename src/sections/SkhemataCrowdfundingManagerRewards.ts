@@ -1,7 +1,7 @@
 import { html } from '@skhemata/skhemata-base'
 import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManagerSection';
 
-export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManagerSection{
+export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingManagerSection{
   
   constructor(){
     super();
@@ -29,7 +29,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
           <sf-form id="form" horizontal>
           <div class="panel is-primary">
             <p class="panel-heading">
-              Basics
+              Rewards
             </p>
             <div class="panel-block">
               <sf-dropzone
