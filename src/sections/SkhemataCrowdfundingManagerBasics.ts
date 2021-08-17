@@ -5,6 +5,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
   
   constructor(){
     super();
+
     this.translations = {
       name: {
         description: 'Create a unique title for your campaign to engage users.',
@@ -23,7 +24,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
       }
     };
   }
- 
+
   render(){
     return html`
           <sf-form id="form" horizontal>
@@ -47,11 +48,12 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               maxlength="60"
               label="Title"
               placeholder="title"
-              value=${this.campaign.name}
+              value=${this.campaign?.name}
               required
               errormessage="Title is required"
               description=${this.translations.name.description}
             ></sf-textbox>
+            ${console.log(this.campaign)}
             </div>
             <div class="panel-block">
             <sf-textbox
@@ -59,7 +61,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               name="blurb"
               label="Blurb"
               placeholder="blurb"
-              value=${this.campaign.blurb}
+              value=${this.campaign?.blurb}
               description=${this.translations.blurb.description}
             ></sf-textbox>
             </div>
@@ -69,7 +71,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               name="raise_mode_id"
               label="Funding Mode"
               placeholder=""
-              value=${this.campaign.raise_mode_id}
+              value=${this.campaign?.raise_mode_id}
               description=${this.translations.fundingMode.description}
             >
               <option value="1">Keep it All Funding Mode</option>

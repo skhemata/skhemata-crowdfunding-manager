@@ -8,9 +8,12 @@ import {
   SkhemataFormAutocomplete,
   SkhemataFormTextarea,
   SkhemataFormQuill,
-  SkhemataFormRepeat
+  SkhemataFormRepeat,
+  SkhemataFormToggle
 } from '@skhemata/skhemata-form';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
+import { Campaign } from '@skhemata/skhemata-api-client-js/dist/src/Campaign';
+
 import { Bulma } from '@skhemata/skhemata-css';
 import { SharedStyles } from '../styles/SharedStyles';
 
@@ -23,6 +26,7 @@ export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
       'sf-dropdown': SkhemataFormDropdown,
       'sf-dropzone': SkhemataFormDropzone,
       'sf-button': SkhemataFormButton,
+      'sf-toggle': SkhemataFormToggle,
       'sf-autocomplete': SkhemataFormAutocomplete,
       'sf-quill': SkhemataFormQuill,
       'sf-repeat': SkhemataFormRepeat

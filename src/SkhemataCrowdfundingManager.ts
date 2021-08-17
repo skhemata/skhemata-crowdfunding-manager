@@ -1,9 +1,17 @@
-import { html, css, CSSResult, property, SkhemataBase } from '@skhemata/skhemata-base';
+import { html, css, CSSResult, property, SkhemataBase, unsafeHTML } from '@skhemata/skhemata-base';
 
 
 import { Bulma } from '@skhemata/skhemata-css';
 import { Skhemata } from '@skhemata/skhemata-api-client-js';
 import { Campaign } from '@skhemata/skhemata-api-client-js/dist/src/Campaign';
+import { BulmaSteps}  from './styles/BulmaSteps';
+
+import { SkhemataCrowdfundingManagerBasics } from './sections/SkhemataCrowdfundingManagerBasics';
+import { SkhemataCrowdfundingManagerDetails } from './sections/SkhemataCrowdfundingManagerDetails';
+import { SkhemataCrowdfundingManagerProfile } from './sections/SkhemataCrowdfundingManagerProfile';
+import { SkhemataCrowdfundingManagerRewards } from './sections/SkhemataCrowdfundingManagerRewards';
+
+
 
 export class SkhemataCrowdfundingManager extends SkhemataBase {
 
@@ -12,13 +20,70 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   // @property({ type: String }) api?: string
 
   @property({ type: Campaign }) campaign?: Campaign;
+  @property({ type: Object})
+  data = {};
 
   @property({ type: Boolean}) error = false;
 
+  testCampaign = {
+    "entry_id": 1,
+    "entry_status_id": 2,
+    "raise_mode_id": 2,
+    "profile_type_id": 1,
+    "currency_id": 30,
+    "duration_type_id": 1,
+    "name": "test",
+    "blurb": "test",
+    "description": "<p>test</p>",
+
+  }
+
   // @property({ type: Skhemata }) skhemata?: Skhemata;
 
-  static styles = [
-    Bulma
+  currentStep = 'basics';
+  steps = [
+    {
+      name: 'basics',
+      text: 'Basics',
+      component: 'skhemata-crowdfunding-manager-basics'
+    },
+    {
+      name: 'details',
+      text: 'Details',
+      component: 'skhemata-crowdfunding-manager-details'
+    },
+    {
+      name: 'profile',
+      text: 'Profile',
+      component: 'skhemata-crowdfunding-manager-profile'
+    },
+    {
+      name: 'rewards',
+      text: 'Rewards',
+      component: 'skhemata-crowdfunding-manager-rewards'
+    }
+  ]
+
+  static get scopedElements(){
+    return {
+      'skhemata-crowdfunding-manager-basics': SkhemataCrowdfundingManagerBasics,
+      'skhemata-crowdfunding-manager-details': SkhemataCrowdfundingManagerDetails,
+      'skhemata-crowdfunding-manager-profile': SkhemataCrowdfundingManagerProfile,
+      'skhemata-crowdfunding-manager-rewards': SkhemataCrowdfundingManagerRewards,
+    }
+  }
+
+  static styles = <CSSResult[]>[
+    Bulma,
+    BulmaSteps,
+    css`
+      .visible {
+        display: block;
+      }
+      .hidden {
+        display: none;
+      }
+    `
   ]
 
   constructor(){
@@ -58,6 +123,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   validateCampaign() {
     let valid = true;
     for(const section of this.sections){
+      console.log(section);
       section.form.validate();
       if(!section.form.valid){
         valid = false;
@@ -98,35 +164,88 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     return elements;
   }
 
-  async firstUpdated(){
-    await super.firstUpdated();
+  async performUpdate(){
 
-    if(this.api){
-      this.skhemata = new Skhemata(this.api.url);
-      this.skhemata.init()
-      .then(() => {
-        if(this.campaignId){
-          this.skhemata?.getCampaign(this.campaignId)
-          .then((campaign: Campaign ) => {
-            this.campaign = campaign;
-            console.log(campaign)
-            for(const section of this.sections){
-              section.campaign = this.campaign?.data;
-            }
-          }).catch((e) => console.log(e));
-        }
-      });
-    }
+    if(!this.campaign && this.api){
+      // if(this.api){
+        this.skhemata = new Skhemata(this.api.url);
+        await this.skhemata.init()
+
+        // .then(() => {
+          if(this.campaignId){
+            const campaign = await this.skhemata?.getCampaign(this.campaignId)
+            // .then((campaign: Campaign ) => {
+              this.campaign = campaign;
+              console.log(this.campaign)
+              this.data = campaign.data;
+              // for(const section of this.sections){
+              //   section.campaign = this.campaign?.data;
+              // }
+              this.requestUpdate()
+            // }).catch((e) => console.log(e));
+          }
+        // });
+      // }  
+    }  
+    super.performUpdate();
+
+  }
+
+  setCurrentStep(name: string) {
+    this.currentStep = name;
+    this.requestUpdate();
+  }
+
+  renderComponent (name: String, stepName: String) {
+    const templateString = `
+    <div class="block ${stepName == this.currentStep ? 'visible' : 'hidden'}">
+      <${name} .campaign=${this.campaign}"></${name}>
+    <div>
+    `;
+    return html`
+    <div class="block ${"basics" == this.currentStep ? 'visible' : 'hidden'}">
+  <skhemata-crowdfunding-manager-basics .campaign=${this.campaign}></skhemata-crowdfunding-manager-basics>
+  <div>`;
   }
 
   render() {
     return html`
-      <div class="block">
-        <slot></slot>
-      </div>
+    <ul class="steps has-content-centered">
+      ${ this.steps.map((step, i) => 
+        html`
+        <li class="steps-segment  ${step.name == this.currentStep ? 'is-active' : ''}" @click=${() => this.setCurrentStep(step.name)}>
+          <span class="steps-marker">${i+1}</span>
+          <div class="steps-content">
+            <p class="is-size-4">${step.text}</p>
+          </div>
+        </li>`
+        )
+      }
+
+    </ul>
+    <div class="block ${"basics" == this.currentStep ? 'visible' : 'hidden'}">
+    <skhemata-crowdfunding-manager-basics .campaign=${this.data}></skhemata-crowdfunding-manager-basics>
+    <div>
+    <div class="block ${"details" == this.currentStep ? 'visible' : 'hidden'}">
+      <skhemata-crowdfunding-manager-details .campaign=${this.data}></skhemata-crowdfunding-manager-details>
+    <div>
+     
+     
       <div class="block is-pulled-right">
         <button class="button is-primary" @click=${this.saveCampaign}>Save</button>
       </div>
     `;
   }
 }
+
+// <div class="block ${"basics" == this.currentStep ? 'visible' : 'hidden'}">
+// <skhemata-crowdfunding-manager-basics .campaign=${this.campaign ? this.campaign.data : {}}></skhemata-crowdfunding-manager-basics>
+// <div>
+// <div class="block ${"details" == this.currentStep ? 'visible' : 'hidden'}">
+  // <skhemata-crowdfunding-manager-details .campaign=${this.campaign ? this.campaign.data : {}}}></skhemata-crowdfunding-manager-details>
+// <div>
+// 
+// ${ this.steps.map((step) => 
+  // this.renderComponent(step.component, step.name)
+  //  )
+//  }

@@ -23,80 +23,74 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
       }
     };
   }
- 
+  
+
   render(){
+    const repeatedFields = [
+      {
+        type: 'textbox',
+        attributes: {
+          name: "amount",
+          label: 'Contribution Amount',
+          description: 'Set your reward amount you want to receive from backers.',
+          required: 'true',
+          placeholder: "0",
+          type: "number"
+        }
+      },
+      {
+        type: 'textbox',
+        attributes: {
+          name: "name",
+          label: 'Name',
+          description: 'Create a title that best describes your reward is offering.',
+          required: 'true',
+          placeholder: "Title for your reward",
+        } 
+      },
+      {
+        type: 'quill',
+        attributes: {
+          name: "description",
+          label: 'Description',
+          description: 'Describe the details of your reward. You can specify your info about what the backers will be receiving after they claim this reward.',
+          required: 'true',
+        } 
+      },
+    ];
+
     return html`
-          <sf-form id="form" horizontal>
-          <div class="panel is-primary">
-            <p class="panel-heading">
-              Rewards
-            </p>
-            <div class="panel-block">
-              <sf-dropzone
-                class="control"
-                label="Featured Image"
-                name="featured_image"
-                description="This image will be used for the campaign card thumbnail and the featured image on the campaign page if the video url is not defined. Image resolution requirement: 1336 x 1002."
-              >
-              </sf-dropzone>
-            </div>
-            <div class="panel-block">
-            <sf-textbox
+      <sf-form id="form" horizontal>
+        <div class="panel is-primary">
+          <p class="panel-heading">
+            Rewards
+          </p>
+          <div class="panel-block">
+            <sf-toggle
               class="control"
-              name="name"
-              maxlength="60"
-              label="Title"
-              placeholder="title"
-              value=${this.campaign.name}
-              required
-              errormessage="Title is required"
-              description=${this.translations.name.description}
-            ></sf-textbox>
-            </div>
-            <div class="panel-block">
-            <sf-textbox
-              class="control"
-              name="blurb"
-              label="Blurb"
-              placeholder="blurb"
-              value=${this.campaign.blurb}
-              description=${this.translations.blurb.description}
-            ></sf-textbox>
-            </div>
-            <div class="panel-block">
-            <sf-dropdown
-              class="control"
-              name="raise_mode_id"
-              label="Funding Mode"
-              placeholder=""
-              value=${this.campaign.raise_mode_id}
-              description=${this.translations.fundingMode.description}
+              description="Choose whether to use pagination for the rewards"
+              onText="Toggle pagination rewards ON"
+              offText="Toggle pagination rewards OFF"
+              label="Pagination Rewards"
+              name="pagination_rewards"
             >
-              <option value="1">Keep it All Funding Mode</option>
-              <option value="2">All  or Nothing Funding Mode</option>
-            </sf-dropdown>
-            </div>
-            <div class="panel-block">
-            <sf-autocomplete
-              class="control"
-              name="location"
-              label="Location"
-              placeholder="Select a location"
-              api=${`${this.api}/service/restv1/location/cities`}
-              description=${this.translations.location.description}
-            ></sf-textbox>
-            </div>
-            <div class="panel-block">
-            <sf-dropdown
-              class="control"
-              label="Category"
-              description="Pick a category for your campaign. Do not worry! You can change it later if you decide that it is not the category for you."
-              name="category"
+            </sf-toggle>
+          </div>
+          <div class="panel-block">
+            <sf-repeat
+              description="Please enter your reward or pledge levels for this project. Note that you can add as many reward levels as you wish. The reward levels are either non-tangible or tangible, (physical and shippable)."
+              label="Rewards"
+              name="rewards"
+              rowName="Reward"
+              addRowButtonText="Add Reward"  
+              removeRowButtonText="Remove Reward"  
+              .repeatedFields=${repeatedFields}
+              rowLimit="5"
             >
-            </sf-dropdown>
-            </div>
-          </panel>
-          </sf-form>
+            </sf-repeat>
+          </div>
+        </div>
+      </sf-form>
     `;
   }
 }
