@@ -1,8 +1,11 @@
 import { html } from '@skhemata/skhemata-base'
+import { property } from 'lit-element';
 import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManagerSection';
 
 export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManagerSection{
   
+  @property({ type: String})
+  base = null;
   constructor(){
     super();
 
@@ -25,6 +28,19 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
     };
   }
 
+  getFeaturedImage() {
+    if(this.campaign?.files) {
+      for(let i = 0; i< this.campaign.files.length; i++){
+        if(this.campaign.files[i].region_id == 3) {
+          console.log(this.campaign.files[i])
+          return this.base + '/image/campaign_detail_large/' + this.campaign.files[i].path_external
+        }
+      }
+
+    }
+    return null
+  }
+
   render(){
     return html`
           <sf-form id="form" horizontal>
@@ -37,6 +53,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                 class="control"
                 label="Featured Image"
                 name="featured_image"
+                imageurl="${this.getFeaturedImage()}"
                 description="This image will be used for the campaign card thumbnail and the featured image on the campaign page if the video url is not defined. Image resolution requirement: 1336 x 1002."
               >
               </sf-dropzone>
@@ -53,7 +70,6 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               errormessage="Title is required"
               description=${this.translations.name.description}
             ></sf-textbox>
-            ${console.log(this.campaign)}
             </div>
             <div class="panel-block">
             <sf-textbox
@@ -71,7 +87,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               name="raise_mode_id"
               label="Funding Mode"
               placeholder=""
-              value=${this.campaign?.raise_mode_id}
+              value=${this.campaign.raise_mode_id}
               description=${this.translations.fundingMode.description}
             >
               <option value="1">Keep it All Funding Mode</option>
@@ -84,7 +100,9 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               name="location"
               label="Location"
               placeholder="Select a location"
-              api=${`${this.api}/service/restv1/location/cities`}
+              maplabel="name"
+              mapvalue="id"
+              .api=${this.api}
               description=${this.translations.location.description}
             ></sf-textbox>
             </div>

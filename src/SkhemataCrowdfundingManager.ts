@@ -25,22 +25,10 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
   @property({ type: Boolean}) error = false;
 
-  testCampaign = {
-    "entry_id": 1,
-    "entry_status_id": 2,
-    "raise_mode_id": 2,
-    "profile_type_id": 1,
-    "currency_id": 30,
-    "duration_type_id": 1,
-    "name": "test",
-    "blurb": "test",
-    "description": "<p>test</p>",
-
-  }
-
-  // @property({ type: Skhemata }) skhemata?: Skhemata;
-
   currentStep = 'basics';
+  currentStepId = 0;
+
+
   steps = [
     {
       name: 'basics',
@@ -106,62 +94,105 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
   saveCampaign = () => {
     const data: any = {};
+
+    const section = this.shadowRoot.querySelector(`#${this.currentStep}[skhemata]`);
+
+
     if(this.validateCampaign()){
-      for(const section of this.sections){
-        Object.entries(section.form.data).forEach(([name, value]) => {
+      // for(const section of this.sections()){
+        Object.entries(section['form'].data).forEach(([name, value]) => {
+          // based on the names of the data, do specialty parsing
           if(name === 'featured_image'){
-            // upload the image
+            console.log(section['form'])
+
+            const formData = new FormData();
+            formData.append('resource_content_type', 'image');
+            formData.append('region_id', '3');
+            formData.append('resource', <any>value);
+            let method = 'post';
+            let url = `${this.api.url}/campaign/${this.campaignId}/resource/file/`;
+            if(this.data['files']) {
+              for(let i = 0; i< this.data['files'].length; i++){
+                if(this.data['files'][i].region_id == 3) {
+                  url = `${this.api.url}/campaign/${this.campaignId}/resource/file/${this.data['files'][i].id}`
+                  method = 'put';
+                }
+              }
+            }
+            
+
+            fetch(url, {
+              method: method,
+              headers: {
+                'x-auth-token': this.campaign?.api.authToken
+              },
+              body: formData
+            }).then(res => {
+              console.log(res)
+            }).catch(err => {
+              console.log(err)
+            })
+
           } else {
             data[name] = value
           }
         })
-      }
+      // }
       this.campaign?.save(data)
+      return true;
+    } else {
+      return false;
     }
   }
 
   validateCampaign() {
     let valid = true;
-    for(const section of this.sections){
-      console.log(section);
-      section.form.validate();
-      if(!section.form.valid){
-        valid = false;
-      }
+    // for(const section of this.sections()){
+    //   console.log(section);
+    const section = this.shadowRoot.querySelector(`#${this.currentStep}[skhemata]`);
+    section['form'].validate();
+    if(!section['form'].valid){
+      valid = false;
     }
+    // }
     return valid
   }
 
-  get sections() {
-    const elements: any[] = [];
-    let children = [];
-    const slot = this.shadowRoot ? this.shadowRoot.querySelector('slot') : null;
-    const childNodes = slot ? slot.assignedNodes({ flatten: true }) : null;
-    children = childNodes
-      ? Array.prototype.filter.call(
-          childNodes,
-          node => node.nodeType === Node.ELEMENT_NODE
-        )
-      : [];
-    const getChildren = (element: any) => {
-      const elementChildren = element.childNodes
-      ? Array.prototype.filter.call(
-          element.childNodes,
-          node => node.nodeType === Node.ELEMENT_NODE
-        )
-      : [];
-      if(elementChildren.length > 0){
-        for(const child of element.childNodes){
-          getChildren(child)
-        }
-      } else if (element.form){
-        elements.push(element);
-      }
-    }
-    for(const child of children){
-      getChildren(child);
-    }
-    return elements;
+  // get sections() {
+  //   const elements: any[] = [];
+  //   let children = [];
+  //   const slot = this.shadowRoot ? this.shadowRoot.querySelector('slot') : null;
+  //   const childNodes = slot ? slot.assignedNodes({ flatten: true }) : null;
+  //   children = childNodes
+  //     ? Array.prototype.filter.call(
+  //         childNodes,
+  //         node => node.nodeType === Node.ELEMENT_NODE
+  //       )
+  //     : [];
+  //   const getChildren = (element: any) => {
+  //     const elementChildren = element.childNodes
+  //     ? Array.prototype.filter.call(
+  //         element.childNodes,
+  //         node => node.nodeType === Node.ELEMENT_NODE
+  //       )
+  //     : [];
+  //     if(elementChildren.length > 0){
+  //       for(const child of element.childNodes){
+  //         getChildren(child)
+  //       }
+  //     } else if (element.form){
+  //       elements.push(element);
+  //     }
+  //   }
+  //   for(const child of children){
+  //     getChildren(child);
+  //   }
+  //   return elements;
+  // }
+
+  sections() {
+    const currentNodes = this.shadowRoot.querySelectorAll('[skhemata]');
+    return Array.from(currentNodes);
   }
 
   async performUpdate(){
@@ -178,9 +209,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
               this.campaign = campaign;
               console.log(this.campaign)
               this.data = campaign.data;
-              // for(const section of this.sections){
-              //   section.campaign = this.campaign?.data;
-              // }
+              for(const section of this.sections()){
+                section['campaign'] = this.campaign?.data;
+              }
               this.requestUpdate()
             // }).catch((e) => console.log(e));
           }
@@ -191,21 +222,17 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
   }
 
-  setCurrentStep(name: string) {
-    this.currentStep = name;
+  setCurrentStep(id: number) {
+    this.currentStepId = id;
+    this.currentStep = this.steps[id].name;
     this.requestUpdate();
   }
 
-  renderComponent (name: String, stepName: String) {
-    const templateString = `
-    <div class="block ${stepName == this.currentStep ? 'visible' : 'hidden'}">
-      <${name} .campaign=${this.campaign}"></${name}>
-    <div>
-    `;
-    return html`
-    <div class="block ${"basics" == this.currentStep ? 'visible' : 'hidden'}">
-  <skhemata-crowdfunding-manager-basics .campaign=${this.campaign}></skhemata-crowdfunding-manager-basics>
-  <div>`;
+  saveAndNavigate() {
+    if(this.saveCampaign()){
+      const nextStepId = this.currentStepId + 1;
+      this.setCurrentStep(nextStepId);
+    }
   }
 
   render() {
@@ -213,7 +240,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     <ul class="steps has-content-centered">
       ${ this.steps.map((step, i) => 
         html`
-        <li class="steps-segment  ${step.name == this.currentStep ? 'is-active' : ''}" @click=${() => this.setCurrentStep(step.name)}>
+        <li class="steps-segment  ${i == this.currentStepId ? 'is-active' : ''}" @click=${() => this.setCurrentStep(i)}>
           <span class="steps-marker">${i+1}</span>
           <div class="steps-content">
             <p class="is-size-4">${step.text}</p>
@@ -223,29 +250,18 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       }
 
     </ul>
-    <div class="block ${"basics" == this.currentStep ? 'visible' : 'hidden'}">
-    <skhemata-crowdfunding-manager-basics .campaign=${this.data}></skhemata-crowdfunding-manager-basics>
-    <div>
-    <div class="block ${"details" == this.currentStep ? 'visible' : 'hidden'}">
-      <skhemata-crowdfunding-manager-details .campaign=${this.data}></skhemata-crowdfunding-manager-details>
-    <div>
-     
+
+      <div class="block" id="scfm-container">
+        <skhemata-crowdfunding-manager-basics id="basics" class="${this.steps[this.currentStepId].name == "basics" ? 'visible' : 'hidden'}" .campaign=${this.data} base="${this.api['base']}" .api=${this.api} skhemata></skhemata-crowdfunding-manager-basics>
+        <skhemata-crowdfunding-manager-details id="details" class="${this.steps[this.currentStepId].name == "details" ? 'visible' : 'hidden'}" .campaign=${this.data} skhemata></skhemata-crowdfunding-manager-details>
+        <skhemata-crowdfunding-manager-profile id="profile" class="${this.steps[this.currentStepId].name == "profile" ? 'visible' : 'hidden'}" .campaign=${this.data} skhemata></skhemata-crowdfunding-manager-profile>
+        <skhemata-crowdfunding-manager-rewards id="rewards" class="${this.steps[this.currentStepId].name == "rewards" ? 'visible' : 'hidden'}" .campaign=${this.data} skhemata></skhemata-crowdfunding-manager-rewards>
+      <div>
      
       <div class="block is-pulled-right">
-        <button class="button is-primary" @click=${this.saveCampaign}>Save</button>
+        <button class="button is-success" @click=${this.saveCampaign}>Save</button>
+        <button class="button is-info" @click=${this.saveAndNavigate}>Next Step</button>
       </div>
     `;
   }
 }
-
-// <div class="block ${"basics" == this.currentStep ? 'visible' : 'hidden'}">
-// <skhemata-crowdfunding-manager-basics .campaign=${this.campaign ? this.campaign.data : {}}></skhemata-crowdfunding-manager-basics>
-// <div>
-// <div class="block ${"details" == this.currentStep ? 'visible' : 'hidden'}">
-  // <skhemata-crowdfunding-manager-details .campaign=${this.campaign ? this.campaign.data : {}}}></skhemata-crowdfunding-manager-details>
-// <div>
-// 
-// ${ this.steps.map((step) => 
-  // this.renderComponent(step.component, step.name)
-  //  )
-//  }

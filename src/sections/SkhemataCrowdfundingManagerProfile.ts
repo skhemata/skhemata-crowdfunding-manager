@@ -63,7 +63,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               name="bio"
               label="Biography (Optional)"
               placeholder="Type something"
-              value=${this.campaign.description}
+              value=${this.campaign.managers ? this.campaign.managers[0].bio : ''}
               required
               errormessage="Description is required"
               description=${this.translations.description}
