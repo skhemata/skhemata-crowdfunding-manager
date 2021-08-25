@@ -49,6 +49,9 @@ export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
   @property({ type: Object })
   data: any = {}
 
+  @property({ type: Object })
+  settings: any = {}
+
   @property({ type: HTMLElement })
   form: HTMLElement | null | undefined = null;
 

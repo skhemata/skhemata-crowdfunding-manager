@@ -57,7 +57,17 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
           required: 'true',
         } 
       },
+      {
+        type: 'textbox',
+        attributes: {
+          name: "item_limit",
+          label: 'Item Limit',
+          description: 'Choose how many rewards you want to be offered. If you leave this field blank, there will be no limit to number of claims that can be made for this perk.',
+          placeholder: "Limit of this reward",
+        } 
+      }
     ];
+    // value=${this.campaign?.settings[2].value}
 
     return html`
       <sf-form id="form" horizontal>
@@ -72,7 +82,7 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
               onText="Toggle pagination rewards ON"
               offText="Toggle pagination rewards OFF"
               label="Pagination Rewards"
-              name="pagination_rewards"
+              name="enable_rewards_pagination"
             >
             </sf-toggle>
           </div>

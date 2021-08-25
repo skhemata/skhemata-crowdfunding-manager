@@ -7,4 +7,11 @@ export const SharedStyles = css`
   .card-header-title{
     color: white;
   }
+
+  .visible {
+    display: block;
+  }
+  .hidden {
+    display: none;
+  }
 `;
