@@ -9,7 +9,9 @@ import {
   SkhemataFormTextarea,
   SkhemataFormQuill,
   SkhemataFormRepeat,
-  SkhemataFormToggle
+  SkhemataFormToggle,
+  SkhemataFormDatePicker,
+  SkhemataFormTime
 } from '@skhemata/skhemata-form';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements';
 import { Campaign } from '@skhemata/skhemata-api-client-js/dist/src/Campaign';
@@ -29,7 +31,10 @@ export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
       'sf-toggle': SkhemataFormToggle,
       'sf-autocomplete': SkhemataFormAutocomplete,
       'sf-quill': SkhemataFormQuill,
-      'sf-repeat': SkhemataFormRepeat
+      'sf-repeat': SkhemataFormRepeat,
+      'sf-date-picker': SkhemataFormDatePicker,
+      'sf-time': SkhemataFormTime
+
     }
   }
 
@@ -40,9 +45,6 @@ export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
     ];
   }
 
-  // @property({ type: String })
-  // api = '';
-
   @property({ type: Object })
   campaign: any = {}
 
@@ -51,6 +53,9 @@ export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
 
   @property({ type: Object })
   settings: any = {}
+
+  @property({ type: Object })
+  links: any = {}
 
   @property({ type: HTMLElement })
   form: HTMLElement | null | undefined = null;

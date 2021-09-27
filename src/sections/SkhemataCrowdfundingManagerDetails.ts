@@ -25,12 +25,12 @@ export class SkhemataCrowdfundingManagerDetails extends SkhemataCrowdfundingMana
         attributes: {
           name: "uri_text",
           placeholder: "Link Text",
-          label: 'Checkbox'
+          label: 'Text'
         }    
       }
     ];
     return html`
-      <sf-form id="form" horizontal=${this.horizontal}>
+      <sf-form id="form">
         <div class="panel is-primary">
           <p class="panel-heading">
             Details
@@ -43,6 +43,7 @@ export class SkhemataCrowdfundingManagerDetails extends SkhemataCrowdfundingMana
               placeholder="Type something"
               value=${this.campaign.description}
               required
+              horizontal
               errormessage="Description is required"
               description=${this.translations.description}
               campaignId=${this.campaign.id}
@@ -51,13 +52,15 @@ export class SkhemataCrowdfundingManagerDetails extends SkhemataCrowdfundingMana
           <div class="panel-block">
             <sf-repeat
               label="Links (Optional)"
-              name="links"
+              name="campaign_links"
               rowName="Link"
+              .rowData=${this.links['2'] ? this.links['2'] : []}
+              horizontal
               description="Add links related to your campaign to gain exposure and trust. It is suggested that most of the links are filled out. You can have a maximum of 4 links."
               addRowButtonText="Add Link"  
               removeRowButtonText="Remove Link"  
               .repeatedFields=${repeatedFields}
-              rowLimit="3"
+              rowLimit="4"
             >
             </sf-repeat>
           </div>
@@ -66,6 +69,7 @@ export class SkhemataCrowdfundingManagerDetails extends SkhemataCrowdfundingMana
               class="control"
               name="google_analytics_id"
               maxlength="60"
+              horizontal
               label="Google Analytics ID (optional)"
               description="Copy your Google Analytics Tracking ID into this field. For example 'UA-XXXXX-Y'."
             ></sf-textbox>

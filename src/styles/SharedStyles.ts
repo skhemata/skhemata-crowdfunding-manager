@@ -14,4 +14,9 @@ export const SharedStyles = css`
   .hidden {
     display: none;
   }
+
+  .panel {
+    margin-bottom: 1.5rem;
+  }
+
 `;

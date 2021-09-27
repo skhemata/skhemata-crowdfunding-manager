@@ -25,6 +25,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   currentStep = 'basics';
   currentStepId = 0;
   settings = {};
+  files = {};
+  @property({ type: Object})
+  links = {};
 
   steps = [
     {
@@ -87,7 +90,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   }
 
   saveCampaign = () => {
-    const data: any = {};
+    const newData: any = {};
 
     const section = this.shadowRoot.querySelector(`#${this.currentStep}[skhemata]`);
 
@@ -100,19 +103,145 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
           } else if(name === 'top_header_image'){
             this.uploadImage(5, value);
           } else if(name === 'profile_type_view_id' || name === 'toggle_profile_type_view_advance') {
+            
+          } else if(name === 'campaign_links') {
+            let links = {};
+            let url = '';
+            let body = {};
+console.log(this.data['links'])
+console.log(value)
+            // Check if there has been a changed value for campaign links
+            if(Array.isArray(value)){
 
+              this.data['links']?.forEach(link => {
+                if(link.region_id == 2) {
+                  links[link.id] = link;
+                }
+              });
+
+              // Determine what action to perform based on value content
+              value.forEach( link => {
+                // Check if ID key exists inside our incoming value
+                // if it doesn't exist, post it.
+                // otherwise, update it
+                if(!('id' in link)) {
+                  url = `${this.api.url}/campaign/${this.campaignId}/resource/link`;
+                  body = {
+                    ...link,
+                    "resource": link['uri'],
+                    "label": link['uri_text'],
+                    "resource_content_type": "generic",
+                    "region_id": 2,
+                    "resource_type": "link"
+                  }
+                  this.sendRequest(url, 'post', JSON.stringify(body));
+                } else {
+                  // Check if there are changes in the object
+                  console.log(links);
+                  console.log(link);
+                  if(links[link.id]['uri_text'] != link.uri_text || links[link.id]['uri'] != link.uri) {
+                    url = `${this.api.url}/campaign/${this.campaignId}/resource/link/${link.id}`;
+                    (function() {
+
+                    }())
+                    this.updateValues(section['form'].data, this.sendRequest(url, 'put', JSON.stringify({...link, 'resource': link.uri})));
+                  }
+                }
+              })
+
+              // Delete link, if current links don't contain previous ones
+              Object.keys(links).forEach(key => {
+                let deletable = true;
+                for(let i = 0; i < value.length; i++ ) {
+                  if(value[i].id == key) {
+                    deletable = false;
+                  }
+                }
+                
+                if(deletable) {
+                  url = `${this.api.url}/campaign/${this.campaignId}/resource/link/${key}`;
+                  this.sendRequest(url, 'delete', JSON.stringify({id: key}));
+                }
+              })           
+              
+              // Clear/ update value and links
+              // section['form'].data['campaign_links'] = ;
+              // issue, the update returns a new id
+              // after the getcampaingdata,
+              // how do i replace the old id with the new one?
+            }
+
+
+          } else if(name === 'individual_profile_image'){
+
+            const formData = new FormData();
+            formData.append('resource_content_type', 'image');
+            formData.append('person_id', this.data['managers'][0]['id']);
+            formData.append('resource', <any>value);
+            let method = 'post';
+            let url = `${this.api.url}/account/resource/file/`;
+            if(this.data['managers'][0]['person_files']) {
+              for(let i = 0; i< this.data['managers'][0]['person_files'].length; i++){
+                if(!value) {
+                  url = `${this.api.url}/account/resource/file/${this.data['managers'][0]['person_files'][i].id}`
+                  method = 'delete'
+                } else {
+                  url = `${this.api.url}/account/resource/file/${this.data['managers'][0]['person_files'][i].id}`
+                  method = 'put';
+                }
+        
+              }
+            }
+            this.sendRequest(url, method, formData);
+          
+          } else if(name === 'company_profile_image'){
+            const formData = new FormData();
+            formData.append('resource_content_type', 'image');
+            formData.append('business_organization_id', this.data['business_organizations'][0]['id']);
+            formData.append('resource', <any>value);
+            let method = 'post';
+            let url = `${this.api.url}/account/resource/file/`;
+            if(this.data['business_organizations'][0]['business_files']) {
+              for(let i = 0; i< this.data['business_organizations'][0]['business_files'].length; i++){
+                if(!value) {
+                  url = `${this.api.url}/account/resource/file/${this.data['business_organizations'][0]['business_files'][i].id}`
+                  method = 'delete'
+                } else {
+                  url = `${this.api.url}/account/resource/file/${this.data['business_organizations'][0]['business_files'][i].id}`
+                  method = 'put';
+                }
+        
+              }
+            }
+            this.sendRequest(url, method, formData);
           } else {
-            data[name] = value
+            newData[name] = value
           }
         })
-      // }
-      this.campaign?.save(data)
+        
+        if(section['form'].data['end_date'] && section['form'].data['end_time'] ) {
+          newData['ends'] = `${section['form'].data['end_date']} ${section['form'].data['end_time']}`;
+        } else if(section['form'].data['end_date']) {
+          newData['ends'] = section['form'].data['end_date']+ this.campaign.data['ends_date_time'].substring(10);
+        } else if(section['form'].data['end_time']) {
+          newData['ends'] = this.campaign.data['ends_date_time'].substring(0,10) + section['form'].data['end_time'];
+        }
+
+        if(section['form'].data['start_date'] && section['form'].data['start_time'] ) {
+          newData['starts'] = `${section['form'].data['start_date']} ${section['form'].data['start_time']}`;
+        } else if(section['form'].data['start_date']) {
+          newData['starts'] = section['form'].data['start_date']+ this.campaign.data['starts_date_time'].substring(10);
+        } else if(section['form'].data['start_time']) {
+          newData['starts'] = this.campaign.data['starts_date_time'].substring(0,10) + section['form'].data['start_time'];
+        }
+      this.campaign?.save(newData);
       return true;
     } else {
       return false;
     }
   }
-
+  // /api/service/restv1/account/resource/file/
+  // https://coral.thrinacia.com/api/service/restv1/account/resource/file/1
   uploadImage(region_id, value) {
     const formData = new FormData();
     formData.append('resource_content_type', 'image');
@@ -122,24 +251,40 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     let url = `${this.api.url}/campaign/${this.campaignId}/resource/file/`;
     if(this.data['files']) {
       for(let i = 0; i< this.data['files'].length; i++){
-        if(this.data['files'][i].region_id == region_id) {
+        if(!value) {
+          url = `${this.api.url}/campaign/${this.campaignId}/resource/file/${this.data['files'][i].id}`
+          method = 'delete'
+        } else if(this.data['files'][i].region_id == region_id) {
           url = `${this.api.url}/campaign/${this.campaignId}/resource/file/${this.data['files'][i].id}`
           method = 'put';
         }
+
       }
     }
     
-    fetch(url, {
+    this.sendRequest(url, method, formData)
+  }
+
+  async sendRequest(url, method, formData) {
+    await fetch(url, {
       method: method,
       headers: {
         'x-auth-token': this.campaign?.api.authToken
       },
       body: formData
-    }).then(res => {
-      console.log(res)
-    }).catch(err => {
-      console.log(err)
     })
+
+    // if(method == 'put' || method == 'post' || method =='delete') {
+    //   await this.getCampaignData();
+    // }
+  }
+
+  async updateValues(data, request, ) {
+    await request;
+    await this.getCampaignData();
+
+    data['campaign_links'] = this.links['2'];
+
   }
 
   validateCampaign() {
@@ -153,38 +298,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     return valid
   }
 
-  // get sections() {
-  //   const elements: any[] = [];
-  //   let children = [];
-  //   const slot = this.shadowRoot ? this.shadowRoot.querySelector('slot') : null;
-  //   const childNodes = slot ? slot.assignedNodes({ flatten: true }) : null;
-  //   children = childNodes
-  //     ? Array.prototype.filter.call(
-  //         childNodes,
-  //         node => node.nodeType === Node.ELEMENT_NODE
-  //       )
-  //     : [];
-  //   const getChildren = (element: any) => {
-  //     const elementChildren = element.childNodes
-  //     ? Array.prototype.filter.call(
-  //         element.childNodes,
-  //         node => node.nodeType === Node.ELEMENT_NODE
-  //       )
-  //     : [];
-  //     if(elementChildren.length > 0){
-  //       for(const child of element.childNodes){
-  //         getChildren(child)
-  //       }
-  //     } else if (element.form){
-  //       elements.push(element);
-  //     }
-  //   }
-  //   for(const child of children){
-  //     getChildren(child);
-  //   }
-  //   return elements;
-  // }
-
   sections() {
     const currentNodes = this.shadowRoot.querySelectorAll('[skhemata]');
     return Array.from(currentNodes);
@@ -192,33 +305,55 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
   async firstUpdated(){
     if(!this.campaign && this.api){
-      // if(this.api){
         this.skhemata = new Skhemata(this.api.url);
         await this.skhemata.init()
 
-        // .then(() => {
-          if(this.campaignId){
-            const campaign = await this.skhemata?.getCampaign(this.campaignId)
-            // .then((campaign: Campaign ) => {
-              this.campaign = campaign;
-              console.log(this.campaign)
-              this.data = campaign.data;
-              for(const section of this.sections()){
-                section['campaign'] = this.campaign?.data;
-              }
-              this.data['settings']?.forEach(setting => {
-                this.settings[setting.name] = setting.value;
-              });
-              this.requestUpdate()
-            // }).catch((e) => console.log(e));
-          }
-        // });
-      // }  
+        this.getCampaignData();
     }  
     super.firstUpdated();
-
   }
 
+  async getCampaignData() {
+    if(this.campaignId){
+      const campaign = await this.skhemata?.getCampaign(this.campaignId)
+      this.campaign = campaign;
+      this.data = {...campaign.data};
+      
+      console.log(this.data)
+
+      for(const section of this.sections()){
+        section['campaign'] = this.data;
+      }
+
+      this.data['settings']?.forEach(setting => {
+        this.settings[setting.name] = setting.value;
+      });
+
+      this.files = {}
+      this.data['files']?.forEach(file => {
+        if(file.region_id == 3) {
+          this.files[`${file.region_id}`] = this.api['base'] + '/image/campaign_detail_large/' + file.path_external
+        } else if (file.region_id == 5) {
+          this.files[`${file.region_id}`] = this.api['base'] + '/image/campaign_top_header_image/' + file.path_external
+        }
+      });
+
+      this.links = {};
+      this.data['links']?.forEach(link => {
+        if(link.region_id == 2) {
+          if(!this.links[`${link.region_id}`]) {
+            this.links[`${link.region_id}`] = [];
+          }
+          this.links[`${link.region_id}`].push({...link});
+        }
+      });
+
+      console.log(this.links);
+      // console.log(this.files);
+      this.requestUpdate();
+    }
+
+  }
   setCurrentStep(id: number) {
     this.currentStepId = id;
     this.currentStep = this.steps[id].name;
@@ -250,9 +385,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       </ul>
   
         <div class="block" id="scfm-container">
-          <skhemata-crowdfunding-manager-basics id="basics" class="${this.steps[this.currentStepId].name == "basics" ? 'visible' : 'hidden'}" .campaign=${this.data} base="${this.api['base']}" .api=${this.api} skhemata></skhemata-crowdfunding-manager-basics>
-          <skhemata-crowdfunding-manager-details id="details" class="${this.steps[this.currentStepId].name == "details" ? 'visible' : 'hidden'}" .campaign=${this.data} .api=${this.api} skhemata></skhemata-crowdfunding-manager-details>
-          <skhemata-crowdfunding-manager-profile id="profile" class="${this.steps[this.currentStepId].name == "profile" ? 'visible' : 'hidden'}" .campaign=${this.data} .settings=${this.settings} skhemata></skhemata-crowdfunding-manager-profile>
+          <skhemata-crowdfunding-manager-basics id="basics" class="${this.steps[this.currentStepId].name == "basics" ? 'visible' : 'hidden'}" .campaign=${this.data} .files=${this.files} .api=${this.api} skhemata></skhemata-crowdfunding-manager-basics>
+          <skhemata-crowdfunding-manager-details id="details" class="${this.steps[this.currentStepId].name == "details" ? 'visible' : 'hidden'}" .campaign=${this.data} .links=${this.links} .api=${this.api} skhemata></skhemata-crowdfunding-manager-details>
+          <skhemata-crowdfunding-manager-profile id="profile" class="${this.steps[this.currentStepId].name == "profile" ? 'visible' : 'hidden'}" .campaign=${this.data} .settings=${this.settings} .api=${this.api} skhemata></skhemata-crowdfunding-manager-profile>
           <skhemata-crowdfunding-manager-rewards id="rewards" class="${this.steps[this.currentStepId].name == "rewards" ? 'visible' : 'hidden'}" .campaign=${this.data} skhemata></skhemata-crowdfunding-manager-rewards>
         <div>
        

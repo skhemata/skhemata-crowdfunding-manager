@@ -65,6 +65,14 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
           description: 'Choose how many rewards you want to be offered. If you leave this field blank, there will be no limit to number of claims that can be made for this perk.',
           placeholder: "Limit of this reward",
         } 
+      },
+      {
+        type: 'datepicker',
+        attributes: {
+          name: "estimated_delivery_time",
+          label: 'Estimated Delivery Date (PDT) (Optional)',
+          description: 'When do you estimate to deliver the items in this reward?',
+        } 
       }
     ];
     // value=${this.campaign?.settings[2].value}
@@ -82,6 +90,7 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
               onText="Toggle pagination rewards ON"
               offText="Toggle pagination rewards OFF"
               label="Pagination Rewards"
+              horizontal
               name="enable_rewards_pagination"
             >
             </sf-toggle>
@@ -91,7 +100,9 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
               description="Please enter your reward or pledge levels for this project. Note that you can add as many reward levels as you wish. The reward levels are either non-tangible or tangible, (physical and shippable)."
               label="Rewards"
               name="rewards"
+              horizontal
               rowName="Reward"
+              .rowData=${this.campaign?.pledges}
               addRowButtonText="Add Reward"  
               removeRowButtonText="Remove Reward"  
               .repeatedFields=${repeatedFields}

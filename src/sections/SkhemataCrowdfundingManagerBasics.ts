@@ -4,8 +4,9 @@ import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManage
 
 export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManagerSection{
   
-  @property({ type: String})
-  base = null;
+  @property({ type: Object})
+  files = {};
+
   constructor(){
     super();
 
@@ -34,30 +35,10 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
     };
   }
 
-  getFeaturedImage() {
-    if(this.campaign?.files) {
-      for(let i = 0; i< this.campaign.files.length; i++){
-        if(this.campaign.files[i].region_id == 3) {
-          return this.base + '/image/campaign_detail_large/' + this.campaign.files[i].path_external
-        }
-      }
+  // Generate links object
+  // generate categories 
 
-    }
-    return null
-  }
 
-  getHeaderImage() {
-    if(this.campaign?.files) {
-      for(let i = 0; i< this.campaign.files.length; i++){
-        if(this.campaign.files[i].region_id == 5) {
-          return this.base + '/image/campaign_top_header_image/' + this.campaign.files[i].path_external
-        }
-
-      }
-
-    }
-    return null
-  }
 
   render(){
     return html`
@@ -66,17 +47,6 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
             <p class="panel-heading">
               Basics
             </p>
-            <div class="panel-block">
-              <sf-dropzone
-                class="control"
-                label="Featured Image"
-                name="featured_image"
-                horizontal
-                imageurl="${this.getFeaturedImage()}"
-                description="This image will be used for the campaign card thumbnail and the featured image on the campaign page if the video url is not defined. Image resolution requirement: 1336 x 1002."
-              >
-              </sf-dropzone>
-            </div>
             <div class="panel-block">
             <sf-textbox
               class="control"
@@ -90,17 +60,55 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               errormessage="Title is required"
               description=${this.translations.name.description}
             ></sf-textbox>
+          </div>
+            <div class="panel-block">
+              <sf-dropzone
+                class="control"
+                label="Featured Image"
+                name="featured_image"
+                horizontal
+                imageurl="${this.files['3']}"
+                description="This image will be used for the campaign card thumbnail and the featured image on the campaign page if the video url is not defined. Image resolution requirement: 1336 x 1002."
+              >
+              </sf-dropzone>
             </div>
             <div class="panel-block">
-            <sf-textbox
-              class="control"
-              name="blurb"
-              label="Blurb"
-              placeholder="blurb"
-              horizontal
-              value=${this.campaign?.blurb}
-              description=${this.translations.blurb.description}
-            ></sf-textbox>
+              <sf-textbox
+                class="control"
+                name="name"
+                maxlength="60"
+                label="Video (Optional)"
+                placeholder="Please enter your campaign video link"
+                value=${this.campaign?.name}
+                required
+                horizontal
+                description="Copy & paste your youtube, vimeo or external video link to this field. This will be displayed as the featured video on the campaign page if the link is specified. Note that video link must be accessible publicly."
+              ></sf-textbox>
+            </div>
+            <div class="panel-block">
+              <sf-textbox
+                class="control"
+                name="name"
+                maxlength="60"
+                label="Thumbnail Video (Optional)"
+                placeholder="Please enter your campaign video link"
+                value=${this.campaign?.name}
+                required
+                horizontal
+                description="If thumbnail video link is specified it will replace the featured image of the campaign. Thumbnail video can be youtube, vimeo or external video link. Note that video link must be accessible publicly."
+              ></sf-textbox>
+            </div>
+            <div class="panel-block">
+              <sf-textarea
+                class="control"
+                name="blurb"
+                label="Blurb"
+                placeholder="blurb"
+                horizontal
+                required
+                value=${this.campaign?.blurb}
+                description=${this.translations.blurb.description}
+              ></sf-textarea>
             </div>
             <div class="panel-block">
               <sf-dropzone
@@ -108,7 +116,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                 label="Top Header Image"
                 name="top_header_image"
                 horizontal
-                imageurl="${this.getHeaderImage()}"
+                imageurl="${this.files['5']}"
                 description="This image will be used for the campaign card thumbnail and the featured image on the campaign page if the video url is not defined. Image resolution requirement: 1336 x 1002."
               >
               </sf-dropzone>
@@ -145,6 +153,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               class="control"
               label="Category"
               horizontal
+              
               description="Pick a category for your campaign. Do not worry! You can change it later if you decide that it is not the category for you."
               name="category"
             >
@@ -156,12 +165,12 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
             Fundraising
           </p>
           <div class="panel-block">
-            <div class="field is-horizontal">
+            <div class="field is-horizontal control">
               <div class="field-label column is-one-quarter" style="text-align: left">
                 <label class="label">Funding Goals <span style="color: red">*</span></label>
                 <p>${this.translations.fundingGoal.description}</p>
               </div>
-              <div class="field-body column is-three-quarters">
+              <div class="field-body column">
                 <div class="columns">
                   <div class="column is-half">
                     <sf-textbox
@@ -189,21 +198,45 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
           </div>
 
           <div class="panel-block">
-            <div class="field is-horizontal">
+            <div class="field is-horizontal control">
               <div class="field-label column is-one-quarter" style="text-align: left">
                 <label class="label">Campaign Funding Duration <span style="color: red">*</span></label>
                 <p>${this.translations.fundingDuration.description}</p>
               </div>
-              <div class="field-body column is-three-quarters">
+              <div class="field-body column">
+
+                <div class="columns">
+                  <div class="column is-half">
+                    <sf-date-picker
+                      class="control"
+                      name="start_date"
+                      label="Start Date (PDT)"
+                      value=${this.campaign?.starts_date_time?.slice(0,10)}
+                      required
+                    ></sf-date-picker>
+                  </div>
+                  <div class="column is-half">
+                    <sf-time
+                      class="control"
+                      label="Time"
+                      name="start_time"
+                      required
+                      value=${this.campaign?.starts_date_time?.slice(11,16)}
+                    >
+                    </sf-time>
+                    
+                  </div>
+                </div>
+
                 <div class="columns">
                   <div class="column is-half">
                     <sf-textbox
                       class="control"
-                      name="campaign_duration"
+                      name="runtime_days"
                       maxlength="60"
                       label="Time Period"
                       placeholder="0"
-                      value=${this.campaign?.funding_goal}
+                      value=${this.campaign?.runtime_days}
                       required
                       errormessage="Funding goal is required"
                     ></sf-textbox>
@@ -221,6 +254,29 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                     </sf-dropdown>
                   </div>
                 </div>
+
+                <div class="columns">
+                  <div class="column is-half">
+                    <sf-date-picker
+                      class="control"
+                      name="end_date"
+                      label="End Date (PDT)"
+                      value=${this.campaign?.ends_date_time?.slice(0,10)}
+                      required
+                    ></sf-date-picker>
+                  </div>
+                  <div class="column is-half">
+                    <sf-time
+                      class="control"
+                      label="Time"
+                      name="end_time"
+                      required
+                      value=${this.campaign?.ends_date_time?.slice(11,16)}
+                    >
+                    </sf-time>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

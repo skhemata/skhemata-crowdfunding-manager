@@ -12,19 +12,42 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
       description: 'Do not worry if you cannot think of anything to say you can change your bio later on.'
     }
   }
+
   updateSettings(data) {
     this.profileTypeId = data['profile_type_id'];
     this.advancedView = data['toggle_profile_type_view_advance'];
-    console.log(data);
     this.requestUpdate();
   }
+
+  // getProfileImage() {
+  //   console.log(this.campaign.managers)
+
+  //   if(this.campaign.managers) {
+  //     this.campaign?.managers[0]?.person_files.forEach(file => {
+  //       return this.api['base'] + '/image/campaign_profile/' + file.path_external
+  //     });
+  //   }
+
+  //   return null
+  // }
+
+  // getcompanyImage() {
+  //   console.log(this.campaign.business_organizations)
+
+  //   if(this.campaign.business_organizations) {
+  //     this.campaign?.business_organizations[0]?.business_files.forEach(file => {
+  //       return this.api['base'] + '/image/campaign_profile/' + file.path_external
+  //     });
+  //   }    
+  //   return null
+  // }
 
   render(){
     const repeatedFields = [
       {
         type: 'textbox',
         attributes: {
-          name: "url",
+          name: "uri",
           label: 'Url',
           placeholder: "Url",
           required: "true"
@@ -33,13 +56,21 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
       {
         type: 'textbox',
         attributes: {
-          name: "text",
+          name: "uri_text",
           placeholder: "Link Text",
-          label: 'Checkbox'
+          label: 'Checkbox',
+          required: "true"
         }    
       }
     ];
 
+    let companyImageUrl = '';
+    if(this.campaign?.business_organizations) {
+      if(this.campaign?.business_organizations[0]?.business_files) {
+        companyImageUrl = this.api['base'] + '/image/campaign_profile/' + this.campaign?.business_organizations[0]?.business_files[0]?.path_external;
+      }
+    }
+    
     return html`
       <sf-form id="form" horizontal=${this.horizontal} @change=${(e) => this.updateSettings(e.detail.data)} >
         <div class="panel is-primary">
@@ -52,6 +83,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               description="You can modify your current profile or add a business organization profile for your company."
               name="profile_type_id"
               label="Type"
+              horizontal
               value="${this.campaign.profile_type_id}"
             >
               <option value="1">Individual User Profile</option>
@@ -64,6 +96,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               description="Enable this for more options to control the display of the individual and business organization profile."
               onText="Enable"
               offText="Disable"
+              horizontal
               name="toggle_profile_type_view_advance"
               label="Toggle Advanced Display"
               value=${this.advancedView}
@@ -76,6 +109,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
                 class="control"
                 name="profile_type_view_id"
                 label="Display Type"
+                horizontal
                 value=${this.settings['profile_type_view_id']}
                 default="0"
               >
@@ -94,15 +128,18 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
           </p>
           <div class="panel-block">
             <sf-dropzone
+              horizontal
               class="control"
               label="Avatar"
               name="individual_profile_image"
+              imageurl=${this.campaign?.managers[0] ? this.api['base'] + '/image/campaign_profile/' + this.campaign?.managers[0].person_files[0].path_external : ''}
               description="Your logo, photo or avatar image.  JPEG, PNG, GIF or BMP - 50MB file limit.  Image should be at least 200x200."
             >
             </sf-dropzone>
           </div>
           <div class="panel-block">
             <sf-textbox
+              horizontal
               class="control"
               name="m_fname"
               maxlength="60"
@@ -119,7 +156,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               maxlength="60"
               label="Last Name"
               placeholder="Last Name"
-              horizontal="true"
+              horizontal
               value=${this.campaign.managers ? this.campaign.managers[0].last_name : ''}
               required
             ></sf-textbox>
@@ -128,6 +165,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
             <sf-textarea
               class="control"
               name="bio"
+              horizontal
               label="Biography (Optional)"
               placeholder="Type something"
               value=${this.campaign.managers ? this.campaign.managers[0].bio : ''}
@@ -141,6 +179,8 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               label="Links (Optional)"
               name="personal_links"
               rowName="Link"
+              horizontal
+              .rowData=${this.campaign.managers ? this.campaign.managers[0].person_websites : []}
               description="Add social links to your profile. You can have a maximum of 5 links."
               addRowButtonText="Add Link"  
               removeRowButtonText="Remove Link"  
@@ -158,6 +198,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
             <sf-textbox
               class="control"
               name="c_name"
+              horizontal
               maxlength="60"
               label="Company Name"
               placeholder="Name"
@@ -169,6 +210,8 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
             <sf-dropzone
               class="control"
               label="Avatar"
+              horizontal
+              imageurl=${this.campaign?.business_organizations ? companyImageUrl : ''}
               name="company_profile_image"
               description="Your logo, photo or avatar image.  JPEG, PNG, GIF or BMP - 50MB file limit.  Image should be at least 200x200."
             >
@@ -178,6 +221,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
             <sf-textarea
               class="control"
               name="bio"
+              horizontal
               label="Description(Optional)"
               placeholder="Type something"
               value=${this.campaign.business_organizations ? this.campaign.business_organizations[0].description : ''}
@@ -191,6 +235,8 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               label="Links (Optional)"
               name="business_websites"
               rowName="Link"
+              horizontal
+              .rowData=${this.campaign.business_organizations ? this.campaign.business_organizations[0].business_websites : []}
               description="Add social links to your profile. You can have a maximum of 5 links."
               addRowButtonText="Add Link"  
               removeRowButtonText="Remove Link"  
