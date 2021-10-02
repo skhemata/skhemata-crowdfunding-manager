@@ -228,32 +228,6 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                   </div>
                 </div>
 
-                <div class="columns">
-                  <div class="column is-half">
-                    <sf-textbox
-                      class="control"
-                      name="runtime_days"
-                      maxlength="60"
-                      label="Time Period"
-                      placeholder="0"
-                      value=${this.campaign?.runtime_days}
-                      required
-                      errormessage="Funding goal is required"
-                    ></sf-textbox>
-                  </div>
-                  <div class="column is-half">
-                    <sf-dropdown
-                      class="control"
-                      label="Type"
-                      name="date_format"
-                    >
-                      <option value="0">Day</option>
-                      <option value="1">Week</option>
-                      <option value="2">Month</option>
-                      <option value="3">Year</option>
-                    </sf-dropdown>
-                  </div>
-                </div>
 
                 <div class="columns">
                   <div class="column is-half">
