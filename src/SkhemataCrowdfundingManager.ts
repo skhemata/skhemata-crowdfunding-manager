@@ -586,7 +586,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         this.links['business'].push({...link})
       });
 
-      this.rewards = [...this.data['pledges']];
+      this.rewards = this.data['pledges'] ? [...this.data['pledges']] : [];
       this.requestUpdate();
     }
 
