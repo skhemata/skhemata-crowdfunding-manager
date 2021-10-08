@@ -1,4 +1,4 @@
-import { html } from '@skhemata/skhemata-base'
+import { html,unsafeHTML } from '@skhemata/skhemata-base'
 import { property } from 'lit-element';
 import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManagerSection';
 
@@ -6,6 +6,9 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
   
   @property({ type: Object})
   files = {};
+
+  @property({ type: Array})
+  categories = [];
 
   constructor(){
     super();
@@ -80,7 +83,6 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                 label="Video (Optional)"
                 placeholder="Please enter your campaign video link"
                 value=${this.campaign?.name}
-                required
                 horizontal
                 description="Copy & paste your youtube, vimeo or external video link to this field. This will be displayed as the featured video on the campaign page if the link is specified. Note that video link must be accessible publicly."
               ></sf-textbox>
@@ -93,7 +95,6 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                 label="Thumbnail Video (Optional)"
                 placeholder="Please enter your campaign video link"
                 value=${this.campaign?.name}
-                required
                 horizontal
                 description="If thumbnail video link is specified it will replace the featured image of the campaign. Thumbnail video can be youtube, vimeo or external video link. Note that video link must be accessible publicly."
               ></sf-textbox>
@@ -128,6 +129,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               label="Funding Mode"
               placeholder=""
               horizontal
+              required
               value=${this.campaign.raise_mode_id}
               description=${this.translations.fundingMode.description}
             >
@@ -138,12 +140,14 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
             <div class="panel-block">
             <sf-autocomplete
               class="control"
-              name="location"
+              name="city_id"
               label="Location"
               placeholder="Select a location"
               maplabel="name"
               mapvalue="id"
               horizontal
+              selected=${this.campaign.cities? this.campaign.cities?.[0].city_full : ''}
+              value=${this.campaign.cities?.[0].city_id}
               .api=${this.api}
               description=${this.translations.location.description}
             ></sf-textbox>
@@ -152,11 +156,19 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
             <sf-dropdown
               class="control"
               label="Category"
+              placeholder="Select a category"
               horizontal
-              
+              selected="${this.campaign.categories ? this.campaign.categories?.[0].name : ''}"
+              value=${this.campaign.categories?.[0].category_id}
               description="Pick a category for your campaign. Do not worry! You can change it later if you decide that it is not the category for you."
-              name="category"
+              name="category_id"
             >
+              ${
+                this.categories.map(category => unsafeHTML(`
+                <option value="${category.category_id}">
+                  ${category.name}
+                </option>`))
+              }
             </sf-dropdown>
             </div>
           </div>

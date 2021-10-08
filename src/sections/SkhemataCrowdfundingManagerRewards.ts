@@ -1,8 +1,11 @@
-import { html } from '@skhemata/skhemata-base'
+import { html, property } from '@skhemata/skhemata-base'
 import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManagerSection';
 
 export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingManagerSection{
   
+  @property({ type: Array })
+  rewards: any = []
+
   constructor(){
     super();
     this.translations = {
@@ -49,7 +52,7 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
         } 
       },
       {
-        type: 'quill',
+        type: 'textarea',
         attributes: {
           name: "description",
           label: 'Description',
@@ -83,18 +86,7 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
           <p class="panel-heading">
             Rewards
           </p>
-          <div class="panel-block">
-            <sf-toggle
-              class="control"
-              description="Choose whether to use pagination for the rewards"
-              onText="Toggle pagination rewards ON"
-              offText="Toggle pagination rewards OFF"
-              label="Pagination Rewards"
-              horizontal
-              name="enable_rewards_pagination"
-            >
-            </sf-toggle>
-          </div>
+
           <div class="panel-block">
             <sf-repeat
               description="Please enter your reward or pledge levels for this project. Note that you can add as many reward levels as you wish. The reward levels are either non-tangible or tangible, (physical and shippable)."
@@ -102,7 +94,7 @@ export class SkhemataCrowdfundingManagerRewards extends SkhemataCrowdfundingMana
               name="rewards"
               horizontal
               rowName="Reward"
-              .rowData=${this.campaign?.pledges}
+              .rowData=${this.rewards}
               addRowButtonText="Add Reward"  
               removeRowButtonText="Remove Reward"  
               .repeatedFields=${repeatedFields}

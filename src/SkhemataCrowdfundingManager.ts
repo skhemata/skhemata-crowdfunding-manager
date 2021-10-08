@@ -10,7 +10,7 @@ import { SkhemataCrowdfundingManagerBasics } from './sections/SkhemataCrowdfundi
 import { SkhemataCrowdfundingManagerDetails } from './sections/SkhemataCrowdfundingManagerDetails';
 import { SkhemataCrowdfundingManagerProfile } from './sections/SkhemataCrowdfundingManagerProfile';
 import { SkhemataCrowdfundingManagerRewards } from './sections/SkhemataCrowdfundingManagerRewards';
-
+import { SkhemataCrowdfundingCampaign } from "@skhemata/skhemata-crowdfunding-campaign";
 
 export class SkhemataCrowdfundingManager extends SkhemataBase {
 
@@ -26,9 +26,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   currentStepId = 0;
   settings = {};
   files = {};
-  @property({ type: Object})
   links = {};
-
+  rewards = [];
+  categories = [];
   steps = [
     {
       name: 'basics',
@@ -49,6 +49,11 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       name: 'rewards',
       text: 'Rewards',
       component: 'skhemata-crowdfunding-manager-rewards'
+    },
+    {
+      name: 'preview',
+      text: 'Preview',
+      component: 'skhemata-crowdfunding-campaign'
     }
   ]
 
@@ -58,6 +63,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       'skhemata-crowdfunding-manager-details': SkhemataCrowdfundingManagerDetails,
       'skhemata-crowdfunding-manager-profile': SkhemataCrowdfundingManagerProfile,
       'skhemata-crowdfunding-manager-rewards': SkhemataCrowdfundingManagerRewards,
+      'skhemata-crowdfunding-campaign': SkhemataCrowdfundingCampaign
     }
   }
 
@@ -70,6 +76,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       }
       .hidden {
         display: none;
+      }
+      .button-container {
+        margin-bottom: 2rem;
       }
     `
   ]
@@ -100,6 +109,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
       // for(const section of this.sections()){
         Object.entries(section['form'].data).forEach(([name, value]) => {
+          console.log(name);
           // based on the names of the data, do specialty parsing
           if(name === 'featured_image'){
             this.uploadImage(3, value);
@@ -181,7 +191,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                   await this.getCampaignData();
                 }).then(() => {
                   section['form'].data['campaign_links'] = this.links['2'];
-                  console.log(section['form'].data['campaign_links']);
                 });
               }
 
@@ -215,8 +224,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                   requestQueue.push(this.sendRequest(url, 'post', JSON.stringify(body)));
                 } else {
                   // Check if there are changes in the object
-                  console.log(links);
-                  console.log(link);
                   if(links[link.id]['uri_text'] != link.uri_text || links[link.id]['uri'] != link.uri) {
                     url = `${this.api.url}/account/website/${link.id}`;
                     requestQueue.push(this.sendRequest(url, 'put', JSON.stringify({...link, 'id': link.id})));
@@ -247,7 +254,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                   await this.getCampaignData();
                 }).then(() => {
                   section['form'].data['personal_links'] = this.links['personal'];
-                  console.log(section['form'].data['personal_links']);
                 });
               }
 
@@ -274,7 +280,63 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
               }
             }
             this.sendRequest(url, method, formData);
+
+          } else if(name === 'rewards') {
+            let pledges = {};
+            let url = '';
+            let body = {};
+            let requestQueue = [];
+
+            if(Array.isArray(value)){
+              this.data?.['pledges']?.forEach(pledge => {
+                pledges[pledge.pledge_level_id] = pledge;
+              });
+
+              // Determine what action to perform based on value content
+              value.forEach( pledge => {
+                // Check if ID key exists inside our incoming value
+                // if it doesn't exist, post it.
+                // otherwise, update it
+                if(!('pledge_level_id' in pledge)) {
+                  url = `${this.api.url}/campaign/${this.campaignId}/pledge-level`;
+                  body = {
+                    ...pledge,
+                  }
+                  requestQueue.push(this.sendRequest(url, 'post', JSON.stringify(body)));
+                } else {
+                  // Check if there are changes in the object   
+                  url = `${this.api.url}/campaign/${this.campaignId}/pledge-level/${pledge.pledge_level_id}`;
+                  requestQueue.push(this.sendRequest(url, 'put', JSON.stringify({...pledge})));
+                }
+              })
+
+              // Delete link, if current links don't contain previous ones
+              Object.keys(pledges).forEach(key => {
+                let deletable = true;
+                for(let i = 0; i < value.length; i++ ) {
+                  if(value[i].pledge_level_id == key) {
+                    deletable = false;
+                  }
+                }
+                
+                if(deletable) {
+                  url = `${this.api.url}/campaign/${this.campaignId}/pledge-level/${key}`;
+                  requestQueue.push(this.sendRequest(url, 'delete', JSON.stringify({id: key})));
+
+                }
+              })           
+
+              if(requestQueue.length > 0) {
+                Promise.all(requestQueue).then(async () => {
+                  await this.getCampaignData();
+                }).then(() => {
+                  section['form'].data['rewards'] = this.rewards;
+                });
+              }
+
+            }
           
+            // https://coral.thrinacia.com/api/service/restv1/campaign/2/pledge-level
           } else if(name === 'company_profile_image'){
             const formData = new FormData();
             formData.append('resource_content_type', 'image');
@@ -295,20 +357,20 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
               }
             }
             this.sendRequest(url, method, formData);
+          }else if(name == 'city_id' || name == 'category_id'){
+            newData[name] = [value];
+            console.log(newData)
           } else {
             newData[name] = value
           }
         })
 
         if(section['form'].data['profile_type_id'] == 2) {
-          console.log(section['form'].data['profile_type_id'])
           if(this.data['business_organizations'] == null) {
-            console.log(this.data['business_organizations'])
 
             await this.sendRequest(`${this.api.url}/account/business`, 'post', JSON.stringify(companyInfo));
             await this.getCampaignData();
           } else {
-            console.log(companyInfo)
             this.sendRequest(`${this.api.url}/account/business/${this.data['business_organizations'][0].business_organization_id}`, 'put', JSON.stringify(companyInfo));
           }
         }
@@ -342,8 +404,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                   requestQueue.push(this.sendRequest(url, 'post', JSON.stringify(body)));
                 } else {
                   // Check if there are changes in the object
-                  console.log(links);
-                  console.log(link);
                   if(links[link.id]['uri_text'] != link.uri_text || links[link.id]['uri'] != link.uri) {
                     url = `${this.api.url}/account/website/${link.id}`;
                     body = {
@@ -378,7 +438,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                   await this.getCampaignData();
                 }).then(() => {
                   section['form'].data['business_websites'] = this.links['business'];
-                  console.log(section['form'].data['business_websites']);
                 });
               }
 
@@ -439,10 +498,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       },
       body: formData
     })
-
-    // if(method == 'put' || method == 'post' || method =='delete') {
-    //   await this.getCampaignData();
-    // }
   }
 
   async updateValues(data, request, ) {
@@ -458,6 +513,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
     const section = this.shadowRoot.querySelector(`#${this.currentStep}[skhemata]`);
     section['form'].validate();
+    console.log(section);
     if(!section['form'].valid){
       valid = false;
     }
@@ -484,7 +540,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       const campaign = await this.skhemata?.getCampaign(this.campaignId)
       this.campaign = campaign;
       this.data = {...campaign.data};
-      
+
+      const categories = await fetch('https://coral.thrinacia.com/api/service/restv1/portal/category');
+      this.categories = await categories.json();
       console.log(this.data)
 
       for(const section of this.sections()){
@@ -521,15 +579,14 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         this.links['personal'].push({...link});
       });
 
-      this.data['business_organizations'][0].business_websites?.forEach(link => {
+      this.data?.['business_organizations']?.[0].business_websites?.forEach(link => {
         if(!this.links['business']) {
           this.links['business'] = [];
         }
         this.links['business'].push({...link})
       });
 
-      console.log(this.links);
-      // console.log(this.files);
+      this.rewards = [...this.data['pledges']];
       this.requestUpdate();
     }
 
@@ -565,16 +622,17 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       </ul>
   
         <div class="block" id="scfm-container">
-          <skhemata-crowdfunding-manager-basics id="basics" class="${this.steps[this.currentStepId].name == "basics" ? 'visible' : 'hidden'}" .campaign=${this.data} .files=${this.files} .api=${this.api} skhemata></skhemata-crowdfunding-manager-basics>
+          <skhemata-crowdfunding-manager-basics id="basics" class="${this.steps[this.currentStepId].name == "basics" ? 'visible' : 'hidden'}" .campaign=${this.data} .files=${this.files} .api=${this.api} .categories=${this.categories} skhemata></skhemata-crowdfunding-manager-basics>
           <skhemata-crowdfunding-manager-details id="details" class="${this.steps[this.currentStepId].name == "details" ? 'visible' : 'hidden'}" .campaign=${this.data} .links=${this.links} .api=${this.api} skhemata></skhemata-crowdfunding-manager-details>
           <skhemata-crowdfunding-manager-profile id="profile" class="${this.steps[this.currentStepId].name == "profile" ? 'visible' : 'hidden'}" .campaign=${this.data} .links=${this.links} .settings=${this.settings} .api=${this.api} skhemata></skhemata-crowdfunding-manager-profile>
-          <skhemata-crowdfunding-manager-rewards id="rewards" class="${this.steps[this.currentStepId].name == "rewards" ? 'visible' : 'hidden'}" .campaign=${this.data} skhemata></skhemata-crowdfunding-manager-rewards>
-        <div>
-       
-        <div class="block is-pulled-right">
+          <skhemata-crowdfunding-manager-rewards id="rewards" class="${this.steps[this.currentStepId].name == "rewards" ? 'visible' : 'hidden'}" .campaign=${this.data} .rewards=${this.rewards} skhemata></skhemata-crowdfunding-manager-rewards>
+         ${this.steps[this.currentStepId].name == "preview" ? html`<skhemata-crowdfunding-campaign campaign_id=${this.campaignId} api_url=${this.api['base']} loc_path="/service/restv1/"></skhemata-crowdfunding-campaign>` : ''}
+        </div>
+        ${this.steps[this.currentStepId].name != "preview" ? html`
+        <div class="block is-pulled-right button-container">
           <button class="button is-success" @click=${this.saveCampaign}>Save</button>
           <button class="button is-info" @click=${this.saveAndNavigate}>Next Step</button>
-        </div>
+        </div>` : ''}
       `;
     } else {
       return null;

@@ -14,7 +14,6 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
   }
 
   updateSettings(data) {
-    console.log(data);
     if(data['profile_type_id']) {
       this.profileTypeId = data['profile_type_id'];
     } else {
@@ -23,29 +22,6 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
     this.advancedView = data['toggle_profile_type_view_advance'];
     this.requestUpdate();
   }
-
-  // getProfileImage() {
-  //   console.log(this.campaign.managers)
-
-  //   if(this.campaign.managers) {
-  //     this.campaign?.managers[0]?.person_files.forEach(file => {
-  //       return this.api['base'] + '/image/campaign_profile/' + file.path_external
-  //     });
-  //   }
-
-  //   return null
-  // }
-
-  // getcompanyImage() {
-  //   console.log(this.campaign.business_organizations)
-
-  //   if(this.campaign.business_organizations) {
-  //     this.campaign?.business_organizations[0]?.business_files.forEach(file => {
-  //       return this.api['base'] + '/image/campaign_profile/' + file.path_external
-  //     });
-  //   }    
-  //   return null
-  // }
 
   render(){
     const repeatedFields = [
