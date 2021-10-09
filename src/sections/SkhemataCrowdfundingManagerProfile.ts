@@ -177,6 +177,7 @@ export class SkhemataCrowdfundingManagerProfile extends SkhemataCrowdfundingMana
               name="company_name"
               horizontal
               maxlength="60"
+              required
               label="Company Name"
               placeholder="Name"
               value=${this.campaign.business_organizations ? this.campaign.business_organizations[0].name : ''}
