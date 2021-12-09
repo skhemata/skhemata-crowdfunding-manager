@@ -336,7 +336,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
             }
           
-            // https://coral.thrinacia.com/api/service/restv1/campaign/2/pledge-level
           } else if(name === 'company_profile_image'){
             const formData = new FormData();
             formData.append('resource_content_type', 'image');
@@ -466,7 +465,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     }
   }
   // /api/service/restv1/account/resource/file/
-  // https://coral.thrinacia.com/api/service/restv1/account/resource/file/1
   uploadImage(region_id, value) {
     const formData = new FormData();
     formData.append('resource_content_type', 'image');
@@ -541,7 +539,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       this.campaign = campaign;
       this.data = {...campaign.data};
 
-      const categories = await fetch('https://coral.thrinacia.com/api/service/restv1/portal/category');
+      const categories = await fetch(this.api['base'] + '/portal/category');
       this.categories = await categories.json();
       console.log(this.data)
 

@@ -19,8 +19,8 @@ npm i @skhemata/skhemata-crowdfunding-manager
 ## Skhemata Authentication
 This component uses skhemata api client which requires authorization for certain calls.
 For local usage, a `skhemataToken` key needs to be added to the localstorage.
-The authtoken can be retrieved from one of the thrinacia websites, for Example: `https://coral.thrinacia.com/`
-By logging in, and retrieving the authtoken from the response of an auth call `https://coral.thrinacia.com/api/service/restv1/authenticate`
+The authtoken can be retrieved from one of the thrinacia websites, for Example: `https://origin.thrinacia.com/`
+By logging in, and retrieving the authtoken from the response of an auth call `https://origin.thrinacia.com/api/service/restv1/authenticate`
 `auth_token: zzzzzzzzzzzzzzzzzzzz`
 
 That authtoken will be used in your local storage as `skhemataToken: zzzzzzzzzzz`
