@@ -1,5 +1,5 @@
 import { SkhemataBase, property, CSSResult } from '@skhemata/skhemata-base'
-import { 
+import {
   SkhemataForm,
   SkhemataFormButton,
   SkhemataFormTextbox,
@@ -19,8 +19,8 @@ import { Campaign } from '@skhemata/skhemata-api-client-js/dist/src/Campaign';
 import { Bulma } from '@skhemata/skhemata-css';
 import { SharedStyles } from '../styles/SharedStyles';
 
-export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
-  static get scopedElements(){
+export class SkhemataCrowdfundingManagerSection extends SkhemataBase {
+  static get scopedElements() {
     return {
       'sf-form': SkhemataForm,
       'sf-textbox': SkhemataFormTextbox,
@@ -66,7 +66,7 @@ export class SkhemataCrowdfundingManagerSection extends SkhemataBase{
   @property({ type: Object })
   translations: any = {};
 
-  async firstUpdated(){
+  async firstUpdated() {
     await super.firstUpdated();
 
     this.form = this.shadowRoot?.getElementById('form');

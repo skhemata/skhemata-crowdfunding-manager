@@ -4,9 +4,14 @@
     "module": "esnext",
     "moduleResolution": "node",
     "noEmitOnError": true,
-    "lib": ["ESNext","es2017", "dom", "DOM.Iterable"],
+    "lib": [
+      "ESNext",
+      "es2017",
+      "dom",
+      "DOM.Iterable"
+    ],
     "strict": false,
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "importHelpers": true,
@@ -17,5 +22,7 @@
     "declaration": true,
     "incremental": true
   },
-  "include": ["**/*.ts"]
+  "include": [
+    "src/**/*.ts"
+  ]
 }

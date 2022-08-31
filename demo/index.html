@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en-GB">
+
 <head>
   <meta charset="utf-8">
   <style>
@@ -7,42 +8,33 @@
       font-family: sans-serif;
     }
   </style>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css"> -->
 </head>
+
 <body>
+
   <div id="demo"></div>
 
   <script type="module">
     import { html, render } from 'lit-html';
     import '../dist/skhemata-crowdfunding-manager.js';
-    import '../node_modules/@skhemata/skhemata-form/dist/skhemata-form.js';
+
     const api = {
-      url: 'https://origin.thrinacia.com/api/service/restv1',
-      base: 'https://origin.thrinacia.com/api'
+      url: 'https://coral.thrinacia.com/api/service/restv1',
+      base: 'https://coral.thrinacia.com/api'
     };
+
+    // const campaignId = 1;
 
     render(
       html`
       <div class="container mt-5">  
-        <skhemata-crowdfunding-manager .api=${api} campaignId="2">
-
-            <div class="block">
-              <skhemata-crowdfunding-manager-basics></skhemata-crowdfunding-manager-basics>      
-            </div>
-            <div class="block">
-              <skhemata-crowdfunding-manager-details></skhemata-crowdfunding-manager-details>      
-            </div>
-            <div class="block">
-              <skhemata-crowdfunding-manager-rewards></skhemata-crowdfunding-manager-rewards>      
-            </div>
-            <div class="block">
-              <skhemata-crowdfunding-manager-profile></skhemata-crowdfunding-manager-profile>      
-            </div>
-        </skhemata-crowdfunding-manager>
+        <skhemata-crowdfunding-manager .api=${api} campaignId="2"></skhemata-crowdfunding-manager>
       </div>
       `,
       document.querySelector('#demo')
     );
   </script>
 </body>
+
 </html>

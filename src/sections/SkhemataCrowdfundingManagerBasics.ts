@@ -1,16 +1,16 @@
-import { html,unsafeHTML } from '@skhemata/skhemata-base'
+import { html, unsafeHTML } from '@skhemata/skhemata-base'
 import { property } from 'lit-element';
 import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManagerSection';
 
-export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManagerSection{
-  
-  @property({ type: Object})
+export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManagerSection {
+
+  @property({ type: Object })
   files = {};
 
-  @property({ type: Array})
+  @property({ type: Array })
   categories = [];
 
-  constructor(){
+  constructor() {
     super();
 
     this.translations = {
@@ -43,7 +43,10 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
 
 
 
-  render(){
+  render() {
+    console.log(this.campaign);
+
+
     return html`
         <sf-form id="form">
           <div class="panel is-primary">
@@ -146,7 +149,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               maplabel="name"
               mapvalue="id"
               horizontal
-              selected=${this.campaign.cities? this.campaign.cities?.[0].city_full : ''}
+              selected=${this.campaign.cities ? this.campaign.cities?.[0].city_full : ''}
               value=${this.campaign.cities?.[0].city_id}
               .api=${this.api}
               description=${this.translations.location.description}
@@ -163,12 +166,11 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               description="Pick a category for your campaign. Do not worry! You can change it later if you decide that it is not the category for you."
               name="category_id"
             >
-              ${
-                this.categories.map(category => unsafeHTML(`
+              ${this.categories.map(category => unsafeHTML(`
                 <option value="${category.category_id}">
                   ${category.name}
                 </option>`))
-              }
+      }
             </sf-dropdown>
             </div>
           </div>
@@ -223,7 +225,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                       class="control"
                       name="start_date"
                       label="Start Date (PDT)"
-                      value=${this.campaign?.starts_date_time?.slice(0,10)}
+                      value=${this.campaign?.starts_date_time?.slice(0, 10)}
                       required
                     ></sf-date-picker>
                   </div>
@@ -233,7 +235,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                       label="Time"
                       name="start_time"
                       required
-                      value=${this.campaign?.starts_date_time?.slice(11,16)}
+                      value=${this.campaign?.starts_date_time?.slice(11, 16)}
                     >
                     </sf-time>
                     
@@ -247,7 +249,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                       class="control"
                       name="end_date"
                       label="End Date (PDT)"
-                      value=${this.campaign?.ends_date_time?.slice(0,10)}
+                      value=${this.campaign?.ends_date_time?.slice(0, 10)}
                       required
                     ></sf-date-picker>
                   </div>
@@ -257,7 +259,7 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
                       label="Time"
                       name="end_time"
                       required
-                      value=${this.campaign?.ends_date_time?.slice(11,16)}
+                      value=${this.campaign?.ends_date_time?.slice(11, 16)}
                     >
                     </sf-time>
                   </div>
