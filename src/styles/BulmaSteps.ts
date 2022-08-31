@@ -9,7 +9,7 @@ export const BulmaSteps = css`
     transform: rotate(359deg);
   }
 }
-
+ 
 .steps:not(:last-child) {
   margin-bottom: 1.5rem;
 }
