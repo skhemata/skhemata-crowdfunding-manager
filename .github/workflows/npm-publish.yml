@@ -31,12 +31,7 @@ jobs:
           node-version: 14
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-<<<<<<< HEAD
       - run: npm publish --tag latest
         if: '!github.event.release.prerelease'
-=======
-      - run: npm publish
-        if: "!github.event.release.prerelease"
->>>>>>> parent of 252c51c (returned changes)
       - run: npm publish --tag dev
         if: 'github.event.release.prerelease'
