@@ -11,7 +11,7 @@
       "DOM.Iterable"
     ],
     "strict": false,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "importHelpers": true,
@@ -23,6 +23,6 @@
     "incremental": true
   },
   "include": [
-    "src/**/*.ts"
+    "**/*.ts"
   ]
 }
