@@ -109,7 +109,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
       .spinnerWrapper {
         position: relative;
-        height: 100vh;
+        height: 50vh;
       }
 
       .spinner {
