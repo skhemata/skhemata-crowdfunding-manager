@@ -102,6 +102,11 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         transform: translate(-50%, -50%);
       }
 
+      .spinnerWrapper {
+        position: relative;
+        height: 100vh;
+      }
+
       .spinner {
         height: 60px;
         width: 60px;
@@ -916,7 +921,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
           : ''}
       `;
     } else {
-      return html`<div class="spinner"></div>`;
+      return html`<div class="spinnerWrapper">
+        <div class="spinner"></div>
+      </div>`;
     }
   }
 }
