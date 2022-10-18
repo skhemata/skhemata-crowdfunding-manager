@@ -1,9 +1,8 @@
-import { html, unsafeHTML } from '@skhemata/skhemata-base'
+import { html, unsafeHTML } from '@skhemata/skhemata-base';
 import { property } from 'lit-element';
 import { SkhemataCrowdfundingManagerSection } from './SkhemataCrowdfundingManagerSection';
 
 export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManagerSection {
-
   @property({ type: Object })
   files = {};
 
@@ -18,35 +17,31 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
         description: 'Create a unique title for your campaign to engage users.',
       },
       blurb: {
-        description: 'The campaign blurb will appear in your campaign\'s thumbnail and at the top of your campaign page.',
+        description:
+          "The campaign blurb will appear in your campaign's thumbnail and at the top of your campaign page.",
       },
       location: {
-        description: 'Choose the location of your campaign.'
+        description: 'Choose the location of your campaign.',
       },
       fundingGoal: {
-        description: `Your funding goal should be the minimum amount needed to complete the project and fulfill all rewards.`
+        description: `Your funding goal should be the minimum amount needed to complete the project and fulfill all rewards.`,
       },
       fundingMode: {
         description: `
         Choose between the two funding modes of your choice. If the campaign has no end date (continuous), the Keep it all funding mode will be the default.
         Keep it all - Keep all the funds contributed even if the goal isn't met.
-        All or nothing - Keep the funds contributed if the funded goal is met`
+        All or nothing - Keep the funds contributed if the funded goal is met`,
       },
       fundingDuration: {
-        description: `Decide how long fundraising for your project will run for.`
-      }
+        description: `Decide how long fundraising for your project will run for.`,
+      },
     };
   }
 
   // Generate links object
-  // generate categories 
-
-
+  // generate categories
 
   render() {
-    console.log(this.campaign);
-
-
     return html`
         <sf-form id="form">
           <div class="panel is-primary">
@@ -149,7 +144,9 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               maplabel="name"
               mapvalue="id"
               horizontal
-              selected=${this.campaign.cities ? this.campaign.cities?.[0].city_full : ''}
+              selected=${
+                this.campaign.cities ? this.campaign.cities?.[0].city_full : ''
+              }
               value=${this.campaign.cities?.[0].city_id}
               .api=${this.api}
               description=${this.translations.location.description}
@@ -161,16 +158,21 @@ export class SkhemataCrowdfundingManagerBasics extends SkhemataCrowdfundingManag
               label="Category"
               placeholder="Select a category"
               horizontal
-              selected="${this.campaign.categories ? this.campaign.categories?.[0].name : ''}"
+              selected="${
+                this.campaign.categories
+                  ? this.campaign.categories?.[0].name
+                  : ''
+              }"
               value=${this.campaign.categories?.[0].category_id}
               description="Pick a category for your campaign. Do not worry! You can change it later if you decide that it is not the category for you."
               name="category_id"
             >
-              ${this.categories.map(category => unsafeHTML(`
+              ${this.categories.map(category =>
+                unsafeHTML(`
                 <option value="${category.category_id}">
                   ${category.name}
-                </option>`))
-      }
+                </option>`)
+              )}
             </sf-dropdown>
             </div>
           </div>
