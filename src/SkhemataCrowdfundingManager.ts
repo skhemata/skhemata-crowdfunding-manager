@@ -888,7 +888,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                 </button>
               </div>
 
-              <div class="modal">
+              <div class="modal ">
                 <div
                   class="modal-background"
                   @click=${() => {
