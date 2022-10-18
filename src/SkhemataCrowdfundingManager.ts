@@ -83,6 +83,11 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     Bulma,
     BulmaSteps,
     css`
+      * {
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+
       .visible {
         display: block;
       }
@@ -113,6 +118,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         position: absolute;
         top: 50%;
         left: 50%;
+        transform: translate(-50%, -50%);
         margin: -30px 0 0 -30px;
         -webkit-animation: rotation 1s infinite linear;
         -moz-animation: rotation 1s infinite linear;
@@ -126,8 +132,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         content: '';
         display: block;
         position: absolute;
-        left: -6px;
-        top: -6px;
+        top: -7px;
         height: 100%;
         width: 100%;
         border-top: 6px solid rgb(0, 209, 178);
