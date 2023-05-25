@@ -31,6 +31,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
 
   @property({ type: Boolean }) error = false;
 
+  submitting = false;
   currentStep = 'basics';
   currentStepId = 0;
   settings = {};
@@ -98,6 +99,10 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         margin-bottom: 2rem;
       }
 
+      .text-center {
+        text-align: center;
+      }
+
       .notification {
         position: absolute;
         width: 300px;
@@ -105,6 +110,11 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         left: 50%;
         right: 50%;
         transform: translate(-50%, -50%);
+      }
+
+      .spinnerSubmitWrapper {
+        position: relative;
+        height: 60px;
       }
 
       .spinnerWrapper {
@@ -192,356 +202,57 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       });
   };
 
-  saveCampaign = async () => {
+  saveStep = async section => {
     const newData: any = {};
+    let companyInfo = {
+      person_id: this.data['managers'][0]['id'],
+    };
 
-    const section = this.shadowRoot.querySelector(
-      `#${this.currentStep}[skhemata]`
-    );
-    if (this.validateCampaign()) {
-      let companyInfo = {
-        person_id: this.data['managers'][0]['id'],
-      };
-
-      // for(const section of this.sections()){
-      Object.entries(section['form'].data).forEach(([name, value]) => {
-        console.log(name);
-        // based on the names of the data, do specialty parsing
-        if (name === 'featured_image') {
-          this.uploadImage(3, value);
-        } else if (name === 'top_header_image') {
-          this.uploadImage(5, value);
-        } else if (
-          name === 'profile_type_view_id' ||
-          name === 'toggle_profile_type_view_advance'
-        ) {
-        } else if (name === 'company_name') {
-          companyInfo['name'] = value;
-        } else if (name === 'company_description') {
-          companyInfo['description'] = value;
-        } else if (name === 'campaign_links') {
-          let links = {};
-          let url = '';
-          let body = {};
-          let requestQueue = [];
-
-          // Check if there has been a changed value for campaign links
-          if (Array.isArray(value)) {
-            this.data['links']?.forEach(link => {
-              if (link.region_id == 2) {
-                links[link.id] = link;
-              }
-            });
-
-            // Determine what action to perform based on value content
-            value.forEach(link => {
-              // Check if ID key exists inside our incoming value
-              // if it doesn't exist, post it.
-              // otherwise, update it
-              if (!('id' in link)) {
-                url = `${this.api.url}/campaign/${this.campaignId}/resource/link`;
-                body = {
-                  ...link,
-                  resource: link['uri'],
-                  label: link['uri_text'],
-                  resource_content_type: 'generic',
-                  region_id: 2,
-                  resource_type: 'link',
-                };
-
-                requestQueue.push(
-                  this.sendRequest(url, 'post', JSON.stringify(body))
-                );
-              } else {
-                // Check if there are changes in the object
-                if (
-                  links[link.id]['uri_text'] != link.uri_text ||
-                  links[link.id]['uri'] != link.uri
-                ) {
-                  url = `${this.api.url}/campaign/${this.campaignId}/resource/link/${link.id}`;
-                  body = {
-                    ...link,
-                    resource: link['uri'],
-                    label: link['uri_text'],
-                    default_protocol: 'http://',
-                  };
-
-                  requestQueue.push(
-                    this.sendRequest(url, 'put', JSON.stringify(body))
-                  );
-                }
-              }
-            });
-
-            // Delete link, if current links don't contain previous ones
-            Object.keys(links).forEach(key => {
-              let deletable = true;
-              for (let i = 0; i < value.length; i++) {
-                if (value[i].id == key) {
-                  deletable = false;
-                }
-              }
-
-              if (deletable) {
-                url = `${this.api.url}/campaign/${this.campaignId}/resource/link/${key}`;
-                requestQueue.push(
-                  this.sendRequest(url, 'delete', JSON.stringify({ id: key }))
-                );
-              }
-            });
-
-            if (requestQueue.length > 0) {
-              Promise.all(requestQueue)
-                .then(async () => {
-                  await this.getCampaignData();
-                })
-                .then(() => {
-                  section['form'].data['campaign_links'] = this.links['2'];
-                });
-            }
-          }
-        } else if (name === 'personal_links') {
-          let links = {};
-          let url = '';
-          let body = {};
-          let requestQueue = [];
-
-          // Check if there has been a changed value for campaign links
-          if (Array.isArray(value)) {
-            this.data?.['managers']?.[0]?.person_websites?.forEach(link => {
-              links[link.id] = link;
-            });
-
-            // Determine what action to perform based on value content
-            value.forEach(link => {
-              // Check if ID key exists inside our incoming value
-              // if it doesn't exist, post it.
-              // otherwise, update it
-              if (!('id' in link)) {
-                url = `${this.api.url}/account/website`;
-                body = {
-                  ...link,
-                  resource: link['uri'],
-                  label: link['uri_text'],
-                  person_id: this.data['managers'][0]['id'],
-                };
-                requestQueue.push(
-                  this.sendRequest(url, 'post', JSON.stringify(body))
-                );
-              } else {
-                // Check if there are changes in the object
-                if (
-                  links[link.id]['uri_text'] != link.uri_text ||
-                  links[link.id]['uri'] != link.uri
-                ) {
-                  url = `${this.api.url}/account/website/${link.id}`;
-                  requestQueue.push(
-                    this.sendRequest(
-                      url,
-                      'put',
-                      JSON.stringify({ ...link, id: link.id })
-                    )
-                  );
-                }
-              }
-            });
-
-            //after typing one time, it breaks and input is not tracked anympre
-            // Delete link, if current links don't contain previous ones
-            Object.keys(links).forEach(key => {
-              let deletable = true;
-              for (let i = 0; i < value.length; i++) {
-                if (value[i].id == key) {
-                  deletable = false;
-                }
-              }
-
-              if (deletable) {
-                url = `${this.api.url}/account/website/${key}`;
-                requestQueue.push(
-                  this.sendRequest(url, 'delete', JSON.stringify({ id: key }))
-                );
-              }
-            });
-
-            if (requestQueue.length > 0) {
-              Promise.all(requestQueue)
-                .then(async () => {
-                  await this.getCampaignData();
-                })
-                .then(() => {
-                  section['form'].data['personal_links'] =
-                    this.links['personal'];
-                });
-            }
-          }
-        } else if (name === 'individual_profile_image') {
-          const formData = new FormData();
-          formData.append('resource_content_type', 'image');
-          formData.append('person_id', this.data['managers'][0]['id']);
-          formData.append('resource', <any>value);
-          let method = 'post';
-          let url = `${this.api.url}/account/resource/file/`;
-          if (this.data['managers'][0]['person_files']) {
-            for (
-              let i = 0;
-              i < this.data['managers'][0]['person_files'].length;
-              i++
-            ) {
-              if (!value) {
-                url = `${this.api.url}/account/resource/file/${this.data['managers'][0]['person_files'][i].id}`;
-                method = 'delete';
-              } else {
-                url = `${this.api.url}/account/resource/file/${this.data['managers'][0]['person_files'][i].id}`;
-                method = 'put';
-              }
-            }
-          }
-          this.sendRequest(url, method, formData);
-        } else if (name === 'rewards') {
-          let pledges = {};
-          let url = '';
-          let body = {};
-          let requestQueue = [];
-
-          if (Array.isArray(value)) {
-            this.data?.['pledges']?.forEach(pledge => {
-              pledges[pledge.pledge_level_id] = pledge;
-            });
-
-            // Determine what action to perform based on value content
-            value.forEach(pledge => {
-              // Check if ID key exists inside our incoming value
-              // if it doesn't exist, post it.
-              // otherwise, update it
-              if (!('pledge_level_id' in pledge)) {
-                url = `${this.api.url}/campaign/${this.campaignId}/pledge-level`;
-                body = {
-                  ...pledge,
-                };
-                requestQueue.push(
-                  this.sendRequest(url, 'post', JSON.stringify(body))
-                );
-              } else {
-                // Check if there are changes in the object
-                url = `${this.api.url}/campaign/${this.campaignId}/pledge-level/${pledge.pledge_level_id}`;
-                requestQueue.push(
-                  this.sendRequest(url, 'put', JSON.stringify({ ...pledge }))
-                );
-              }
-            });
-
-            // Delete link, if current links don't contain previous ones
-            Object.keys(pledges).forEach(key => {
-              let deletable = true;
-              for (let i = 0; i < value.length; i++) {
-                if (value[i].pledge_level_id == key) {
-                  deletable = false;
-                }
-              }
-
-              if (deletable) {
-                url = `${this.api.url}/campaign/${this.campaignId}/pledge-level/${key}`;
-                requestQueue.push(
-                  this.sendRequest(url, 'delete', JSON.stringify({ id: key }))
-                );
-              }
-            });
-
-            if (requestQueue.length > 0) {
-              Promise.all(requestQueue)
-                .then(async () => {
-                  await this.getCampaignData();
-                })
-                .then(() => {
-                  section['form'].data['rewards'] = this.rewards;
-                });
-            }
-          }
-        } else if (name === 'company_profile_image') {
-          const formData = new FormData();
-          formData.append('resource_content_type', 'image');
-          formData.append(
-            'business_organization_id',
-            this.data['business_organizations'][0]['id']
-          );
-          formData.append('resource', <any>value);
-          let method = 'post';
-          let url = `${this.api.url}/account/resource/file/`;
-          if (this.data['business_organizations'][0]['business_files']) {
-            for (
-              let i = 0;
-              i <
-              this.data['business_organizations'][0]['business_files'].length;
-              i++
-            ) {
-              if (!value) {
-                url = `${this.api.url}/account/resource/file/${this.data['business_organizations'][0]['business_files'][i].id}`;
-                method = 'delete';
-              } else {
-                url = `${this.api.url}/account/resource/file/${this.data['business_organizations'][0]['business_files'][i].id}`;
-                method = 'put';
-              }
-            }
-          }
-          this.sendRequest(url, method, formData);
-        } else if (name == 'city_id' || name == 'category_id') {
-          newData[name] = [value];
-          console.log(newData);
-        } else {
-          newData[name] = value;
-        }
-      });
-
-      if (section['form'].data['profile_type_id'] == 2) {
-        if (this.data['business_organizations'] == null) {
-          await this.sendRequest(
-            `${this.api.url}/account/business`,
-            'post',
-            JSON.stringify(companyInfo)
-          );
-          await this.getCampaignData();
-        } else {
-          this.sendRequest(
-            `${this.api.url}/account/business/${this.data['business_organizations'][0].business_organization_id}`,
-            'put',
-            JSON.stringify(companyInfo)
-          );
-        }
-      }
-
-      if (
-        section['form'].data['business_websites'] &&
-        section['form'].data['business_websites'].length > 0
+    // for(const section of this.sections()){
+    Object.entries(section['form'].data).forEach(([name, value]) => {
+      // based on the names of the data, do specialty parsing
+      if (name === 'featured_image') {
+        this.uploadImage(3, value);
+      } else if (name === 'top_header_image') {
+        this.uploadImage(5, value);
+      } else if (
+        name === 'profile_type_view_id' ||
+        name === 'toggle_profile_type_view_advance'
       ) {
-        let value = section['form'].data['business_websites'];
+      } else if (name === 'company_name') {
+        companyInfo['name'] = value;
+      } else if (name === 'company_description') {
+        companyInfo['description'] = value;
+      } else if (name === 'campaign_links') {
         let links = {};
         let url = '';
         let body = {};
         let requestQueue = [];
-        // Have to create business organization first if its null
 
         // Check if there has been a changed value for campaign links
         if (Array.isArray(value)) {
-          this.data['business_organizations'][0].business_websites?.forEach(
-            link => {
+          this.data['links']?.forEach(link => {
+            if (link.region_id == 2) {
               links[link.id] = link;
             }
-          );
+          });
 
-          const organizationId =
-            this.data['business_organizations'][0].business_organization_id;
           // Determine what action to perform based on value content
           value.forEach(link => {
             // Check if ID key exists inside our incoming value
             // if it doesn't exist, post it.
             // otherwise, update it
             if (!('id' in link)) {
-              url = `${this.api.url}/account/website`;
+              url = `${this.api.url}/campaign/${this.campaignId}/resource/link`;
               body = {
                 ...link,
-                business_organization_id: organizationId,
+                resource: link['uri'],
+                label: link['uri_text'],
+                resource_content_type: 'generic',
+                region_id: 2,
+                resource_type: 'link',
               };
+
               requestQueue.push(
                 this.sendRequest(url, 'post', JSON.stringify(body))
               );
@@ -551,13 +262,14 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                 links[link.id]['uri_text'] != link.uri_text ||
                 links[link.id]['uri'] != link.uri
               ) {
-                url = `${this.api.url}/account/website/${link.id}`;
+                url = `${this.api.url}/campaign/${this.campaignId}/resource/link/${link.id}`;
                 body = {
                   ...link,
-                  profile_link_default_protocol: 'http://',
-                  business_organization_id: organizationId,
-                  uri_id: link.id,
+                  resource: link['uri'],
+                  label: link['uri_text'],
+                  default_protocol: 'http://',
                 };
+
                 requestQueue.push(
                   this.sendRequest(url, 'put', JSON.stringify(body))
                 );
@@ -575,9 +287,9 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
             }
 
             if (deletable) {
-              url = `${this.api.url}/account/website/${key}?business_organization_id=${organizationId}`;
+              url = `${this.api.url}/campaign/${this.campaignId}/resource/link/${key}`;
               requestQueue.push(
-                this.sendRequest(url, 'delete', JSON.stringify({}))
+                this.sendRequest(url, 'delete', JSON.stringify({ id: key }))
               );
             }
           });
@@ -588,58 +300,353 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                 await this.getCampaignData();
               })
               .then(() => {
-                section['form'].data['business_websites'] =
-                  this.links['business'];
+                section['form'].data['campaign_links'] = this.links['2'];
               });
           }
         }
-      }
+      } else if (name === 'personal_links') {
+        let links = {};
+        let url = '';
+        let body = {};
+        let requestQueue = [];
 
-      if (
-        section['form'].data['end_date'] &&
-        section['form'].data['end_time']
-      ) {
-        newData[
-          'ends'
-        ] = `${section['form'].data['end_date']} ${section['form'].data['end_time']}:00`;
-      } else if (section['form'].data['end_date']) {
-        newData['ends'] =
-          section['form'].data['end_date'] +
-          this.campaign.data['ends_date_time'].substring(10);
-      } else if (section['form'].data['end_time']) {
-        newData['ends'] =
-          this.campaign.data['ends_date_time'].substring(0, 10) +
-          section['form'].data['end_time'] +
-          ':00';
-      }
+        // Check if there has been a changed value for campaign links
+        if (Array.isArray(value)) {
+          this.data?.['managers']?.[0]?.person_websites?.forEach(link => {
+            links[link.id] = link;
+          });
 
-      if (
-        section['form'].data['start_date'] &&
-        section['form'].data['start_time']
-      ) {
-        newData[
-          'starts'
-        ] = `${section['form'].data['start_date']} ${section['form'].data['start_time']}:00`;
-      } else if (section['form'].data['start_date']) {
-        newData['starts'] =
-          section['form'].data['start_date'] +
-          this.campaign.data['starts_date_time'].substring(10);
-      } else if (section['form'].data['start_time']) {
-        newData['starts'] =
-          this.campaign.data['starts_date_time'].substring(0, 10) +
-          section['form'].data['start_time'] +
-          ':00';
-      }
-      this.campaign?.save(newData);
+          // Determine what action to perform based on value content
+          value.forEach(link => {
+            // Check if ID key exists inside our incoming value
+            // if it doesn't exist, post it.
+            // otherwise, update it
+            if (!('id' in link)) {
+              url = `${this.api.url}/account/website`;
+              body = {
+                ...link,
+                resource: link['uri'],
+                label: link['uri_text'],
+                person_id: this.data['managers'][0]['id'],
+              };
+              requestQueue.push(
+                this.sendRequest(url, 'post', JSON.stringify(body))
+              );
+            } else {
+              // Check if there are changes in the object
+              if (
+                links[link.id]['uri_text'] != link.uri_text ||
+                links[link.id]['uri'] != link.uri
+              ) {
+                url = `${this.api.url}/account/website/${link.id}`;
+                requestQueue.push(
+                  this.sendRequest(
+                    url,
+                    'put',
+                    JSON.stringify({ ...link, id: link.id })
+                  )
+                );
+              }
+            }
+          });
 
-      if (this.shadowRoot) {
-        const modal = this.shadowRoot.querySelector('.modal');
-        if (modal) {
-          modal.classList.toggle('is-active');
+          //after typing one time, it breaks and input is not tracked anympre
+          // Delete link, if current links don't contain previous ones
+          Object.keys(links).forEach(key => {
+            let deletable = true;
+            for (let i = 0; i < value.length; i++) {
+              if (value[i].id == key) {
+                deletable = false;
+              }
+            }
+
+            if (deletable) {
+              url = `${this.api.url}/account/website/${key}`;
+              requestQueue.push(
+                this.sendRequest(url, 'delete', JSON.stringify({ id: key }))
+              );
+            }
+          });
+
+          if (requestQueue.length > 0) {
+            Promise.all(requestQueue)
+              .then(async () => {
+                await this.getCampaignData();
+              })
+              .then(() => {
+                section['form'].data['personal_links'] = this.links['personal'];
+              });
+          }
+        }
+      } else if (name === 'individual_profile_image') {
+        const formData = new FormData();
+        formData.append('resource_content_type', 'image');
+        formData.append('person_id', this.data['managers'][0]['id']);
+        formData.append('resource', <any>value);
+        let method = 'post';
+        let url = `${this.api.url}/account/resource/file/`;
+        if (this.data['managers'][0]['person_files']) {
+          for (
+            let i = 0;
+            i < this.data['managers'][0]['person_files'].length;
+            i++
+          ) {
+            if (!value) {
+              url = `${this.api.url}/account/resource/file/${this.data['managers'][0]['person_files'][i].id}`;
+              method = 'delete';
+            } else {
+              url = `${this.api.url}/account/resource/file/${this.data['managers'][0]['person_files'][i].id}`;
+              method = 'put';
+            }
+          }
+        }
+        this.sendRequest(url, method, formData);
+      } else if (name === 'rewards') {
+        let pledges = {};
+        let url = '';
+        let body = {};
+        let requestQueue = [];
+
+        if (Array.isArray(value)) {
+          this.data?.['pledges']?.forEach(pledge => {
+            pledges[pledge.pledge_level_id] = pledge;
+          });
+
+          // Determine what action to perform based on value content
+          value.forEach(pledge => {
+            // Check if ID key exists inside our incoming value
+            // if it doesn't exist, post it.
+            // otherwise, update it
+            if (!('pledge_level_id' in pledge)) {
+              url = `${this.api.url}/campaign/${this.campaignId}/pledge-level`;
+              body = {
+                ...pledge,
+              };
+              requestQueue.push(
+                this.sendRequest(url, 'post', JSON.stringify(body))
+              );
+            } else {
+              // Check if there are changes in the object
+              url = `${this.api.url}/campaign/${this.campaignId}/pledge-level/${pledge.pledge_level_id}`;
+              requestQueue.push(
+                this.sendRequest(url, 'put', JSON.stringify({ ...pledge }))
+              );
+            }
+          });
+
+          // Delete link, if current links don't contain previous ones
+          Object.keys(pledges).forEach(key => {
+            let deletable = true;
+            for (let i = 0; i < value.length; i++) {
+              if (value[i].pledge_level_id == key) {
+                deletable = false;
+              }
+            }
+
+            if (deletable) {
+              url = `${this.api.url}/campaign/${this.campaignId}/pledge-level/${key}`;
+              requestQueue.push(
+                this.sendRequest(url, 'delete', JSON.stringify({ id: key }))
+              );
+            }
+          });
+
+          if (requestQueue.length > 0) {
+            Promise.all(requestQueue)
+              .then(async () => {
+                await this.getCampaignData();
+              })
+              .then(() => {
+                section['form'].data['rewards'] = this.rewards;
+              });
+          }
+        }
+      } else if (name === 'company_profile_image') {
+        const formData = new FormData();
+        formData.append('resource_content_type', 'image');
+        formData.append(
+          'business_organization_id',
+          this.data['business_organizations'][0]['id']
+        );
+        formData.append('resource', <any>value);
+        let method = 'post';
+        let url = `${this.api.url}/account/resource/file/`;
+        if (this.data['business_organizations'][0]['business_files']) {
+          for (
+            let i = 0;
+            i < this.data['business_organizations'][0]['business_files'].length;
+            i++
+          ) {
+            if (!value) {
+              url = `${this.api.url}/account/resource/file/${this.data['business_organizations'][0]['business_files'][i].id}`;
+              method = 'delete';
+            } else {
+              url = `${this.api.url}/account/resource/file/${this.data['business_organizations'][0]['business_files'][i].id}`;
+              method = 'put';
+            }
+          }
+        }
+        this.sendRequest(url, method, formData);
+      } else if (name == 'city_id' || name == 'category_id') {
+        newData[name] = [value];
+      } else {
+        newData[name] = value;
+      }
+    });
+
+    if (section['form'].data['profile_type_id'] == 2) {
+      if (this.data['business_organizations'] == null) {
+        await this.sendRequest(
+          `${this.api.url}/account/business`,
+          'post',
+          JSON.stringify(companyInfo)
+        );
+        await this.getCampaignData();
+      } else {
+        this.sendRequest(
+          `${this.api.url}/account/business/${this.data['business_organizations'][0].business_organization_id}`,
+          'put',
+          JSON.stringify(companyInfo)
+        );
+      }
+    }
+
+    if (
+      section['form'].data['business_websites'] &&
+      section['form'].data['business_websites'].length > 0
+    ) {
+      let value = section['form'].data['business_websites'];
+      let links = {};
+      let url = '';
+      let body = {};
+      let requestQueue = [];
+      // Have to create business organization first if its null
+
+      // Check if there has been a changed value for campaign links
+      if (Array.isArray(value)) {
+        this.data['business_organizations'][0].business_websites?.forEach(
+          link => {
+            links[link.id] = link;
+          }
+        );
+
+        const organizationId =
+          this.data['business_organizations'][0].business_organization_id;
+        // Determine what action to perform based on value content
+        value.forEach(link => {
+          // Check if ID key exists inside our incoming value
+          // if it doesn't exist, post it.
+          // otherwise, update it
+          if (!('id' in link)) {
+            url = `${this.api.url}/account/website`;
+            body = {
+              ...link,
+              business_organization_id: organizationId,
+            };
+            requestQueue.push(
+              this.sendRequest(url, 'post', JSON.stringify(body))
+            );
+          } else {
+            // Check if there are changes in the object
+            if (
+              links[link.id]['uri_text'] != link.uri_text ||
+              links[link.id]['uri'] != link.uri
+            ) {
+              url = `${this.api.url}/account/website/${link.id}`;
+              body = {
+                ...link,
+                profile_link_default_protocol: 'http://',
+                business_organization_id: organizationId,
+                uri_id: link.id,
+              };
+              requestQueue.push(
+                this.sendRequest(url, 'put', JSON.stringify(body))
+              );
+            }
+          }
+        });
+
+        // Delete link, if current links don't contain previous ones
+        Object.keys(links).forEach(key => {
+          let deletable = true;
+          for (let i = 0; i < value.length; i++) {
+            if (value[i].id == key) {
+              deletable = false;
+            }
+          }
+
+          if (deletable) {
+            url = `${this.api.url}/account/website/${key}?business_organization_id=${organizationId}`;
+            requestQueue.push(
+              this.sendRequest(url, 'delete', JSON.stringify({}))
+            );
+          }
+        });
+
+        if (requestQueue.length > 0) {
+          Promise.all(requestQueue)
+            .then(async () => {
+              await this.getCampaignData();
+            })
+            .then(() => {
+              section['form'].data['business_websites'] =
+                this.links['business'];
+            });
         }
       }
+    }
 
-      return true;
+    if (section['form'].data['end_date'] && section['form'].data['end_time']) {
+      newData[
+        'ends'
+      ] = `${section['form'].data['end_date']} ${section['form'].data['end_time']}:00`;
+    } else if (section['form'].data['end_date']) {
+      newData['ends'] =
+        section['form'].data['end_date'] +
+        this.campaign.data['ends_date_time'].substring(10);
+    } else if (section['form'].data['end_time']) {
+      newData['ends'] =
+        this.campaign.data['ends_date_time'].substring(0, 10) +
+        section['form'].data['end_time'] +
+        ':00';
+    }
+
+    if (
+      section['form'].data['start_date'] &&
+      section['form'].data['start_time']
+    ) {
+      newData[
+        'starts'
+      ] = `${section['form'].data['start_date']} ${section['form'].data['start_time']}:00`;
+    } else if (section['form'].data['start_date']) {
+      newData['starts'] =
+        section['form'].data['start_date'] +
+        this.campaign.data['starts_date_time'].substring(10);
+    } else if (section['form'].data['start_time']) {
+      newData['starts'] =
+        this.campaign.data['starts_date_time'].substring(0, 10) +
+        section['form'].data['start_time'] +
+        ':00';
+    }
+    this.campaign?.save(newData);
+
+    return true;
+  };
+
+  saveCampaign = async () => {
+    const section = this.shadowRoot.querySelector(
+      `#${this.currentStep}[skhemata]`
+    );
+    if (this.validateCampaign()) {
+      if (this.saveStep(section)) {
+        if (this.shadowRoot) {
+          const modal = this.shadowRoot.querySelector('.modal');
+          if (modal) {
+            modal.classList.toggle('is-active');
+          }
+        }
+        return true;
+      }
     } else {
       return false;
     }
@@ -668,40 +675,68 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   }
 
   submitCampaign = async () => {
-    console.log('Submit Campaign');
+    let saved = true;
     let valid = true;
     let url = '';
     let data = {};
 
-    // Check all steps valid.
-    this.steps.forEach(step => {
-      if (step.name == 'preview') {
-        return;
+    this.submitting = true;
+    await this.requestUpdate();
+    for (const index in this.steps) {
+      if (this.steps[index].name == 'preview') {
+        continue;
       }
 
-      const section = this.shadowRoot.querySelector(`#${step.name}[skhemata]`);
+      const section = this.shadowRoot.querySelector(
+        `#${this.steps[index].name}[skhemata]`
+      );
       section['form'].validate();
       if (!section['form'].valid) {
+        this.setCurrentStep(Number(index));
         valid = false;
+        break;
       }
-    });
-    console.log(valid);
+    }
 
     if (valid) {
-      this.saveCampaign().then(result => {
-        if (result) {
-          url = `${this.api.url}/campaign/${this.campaignId}`;
-          data = { entry_status_id: 10 };
-          this.sendRequest(url, 'put', JSON.stringify(data));
-        } else {
+      // Save all steps.
+      for (const index in this.steps) {
+        if (this.steps[index].name == 'preview') {
+          continue;
         }
-      });
+        const section = this.shadowRoot.querySelector(
+          `#${this.steps[index].name}[skhemata]`
+        );
+        if (!this.saveStep(section)) {
+          saved = false;
+        }
+      }
+      if (saved) {
+        url = `${this.api.url}/campaign/${this.campaignId}`;
+        data = { entry_status_id: 10 };
+        this.sendRequest(url, 'put', JSON.stringify(data)).then(result => {
+          this.submitting = false;
+          this.requestUpdate();
+          if (this.shadowRoot) {
+            const modal = this.shadowRoot.querySelector('.modal');
+            if (modal) {
+              modal.classList.toggle('is-active');
+            }
+          }
+        });
+      }
+    } else {
+      this.submitting = false;
+      await this.requestUpdate();
+      // Wait for step to be displayed and run validation to scroll to error.
+      await new Promise(f => setTimeout(f, 10));
+      this.validateCampaign();
     }
   };
 
   async sendRequest(url, method, formData) {
     const skhemataToken = localStorage.getItem('skhemataToken');
-    await fetch(url, {
+    return await fetch(url, {
       method: method,
       headers: {
         // 'x-auth-token': this.campaign?.api?.authToken || this.checkToken,
@@ -719,21 +754,37 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   }
 
   validateCampaign() {
-    let firstInvalid: HTMLElement;
     let valid = true;
 
     const section = this.shadowRoot.querySelector(
       `#${this.currentStep}[skhemata]`
     );
+
+    if (this.currentStep === 'preview') {
+      return true;
+    }
+
     section['form'].validate();
     if (!section['form'].valid) {
       valid = false;
     }
 
-    firstInvalid = section['form'].querySelector('.is-danger');
-
-    if (firstInvalid != null) {
-      firstInvalid.focus();
+    // Check input fields for that have helpClass is-danger and scroll to the element.
+    for (let element of section['form'].querySelectorAll(
+      'sf-form, sf-textbox, sf-textarea, sf-dropdown, sf-dropzone, sf-button, sf-toggle, sf-autocomplete, sf-quill, sf-repeat, sf-date-picker, sf-time'
+    )) {
+      if (
+        (element as any).helpClass &&
+        (element as any).helpClass === 'is-danger'
+      ) {
+        window.scroll({
+          top:
+            (element as HTMLElement).getBoundingClientRect().top +
+            window.scrollY,
+          behavior: 'smooth',
+        });
+        break;
+      }
     }
 
     return valid;
@@ -937,7 +988,18 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         </div>
         ${this.steps[this.currentStepId].name != 'preview'
           ? html`
-              <div class="block is-pulled-right button-container">
+              <div
+                class="spinnerSubmitWrapper ${this.submitting
+                  ? 'visible'
+                  : 'hidden'}"
+              >
+                <div class="spinner"></div>
+              </div>
+              <div
+                class="block is-pulled-right button-container ${this.submitting
+                  ? 'hidden'
+                  : 'visible'}"
+              >
                 <button class="button is-success" @click=${this.saveCampaign}>
                   Save
                 </button>
@@ -960,7 +1022,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                 ></div>
                 <div class="modal-content">
                   <div class="box">
-                    <p>Your changes have been saved!</p>
+                    <p class="text-center">Your changes have been saved!</p>
                   </div>
                 </div>
                 <!-- <button class="modal-close is-large" aria-label="close"></button> -->
@@ -971,7 +1033,18 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
           </div> -->
             `
           : html`
-              <div class="block is-pulled-right button-container">
+              <div
+                class="spinnerSubmitWrapper ${this.submitting
+                  ? 'visible'
+                  : 'hidden'}"
+              >
+                <div class="spinner"></div>
+              </div>
+              <div
+                class="block is-pulled-right button-container ${this.submitting
+                  ? 'hidden'
+                  : 'visible'}"
+              >
                 <button class="button is-success" @click=${this.submitCampaign}>
                   Launch Campaign
                 </button>
@@ -991,7 +1064,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                 ></div>
                 <div class="modal-content">
                   <div class="box">
-                    <p>Your campaign has been submitted!</p>
+                    <p class="text-center">Your campaign has been submitted!</p>
                   </div>
                 </div>
               </div>
