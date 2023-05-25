@@ -510,7 +510,10 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
         }
       }
 
-      if (section['form'].data['business_websites']) {
+      if (
+        section['form'].data['business_websites'] &&
+        section['form'].data['business_websites'].length > 0
+      ) {
         let value = section['form'].data['business_websites'];
         let links = {};
         let url = '';
@@ -598,7 +601,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       ) {
         newData[
           'ends'
-        ] = `${section['form'].data['end_date']} ${section['form'].data['end_time']}`;
+        ] = `${section['form'].data['end_date']} ${section['form'].data['end_time']}:00`;
       } else if (section['form'].data['end_date']) {
         newData['ends'] =
           section['form'].data['end_date'] +
@@ -606,7 +609,8 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       } else if (section['form'].data['end_time']) {
         newData['ends'] =
           this.campaign.data['ends_date_time'].substring(0, 10) +
-          section['form'].data['end_time'];
+          section['form'].data['end_time'] +
+          ':00';
       }
 
       if (
@@ -615,7 +619,7 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       ) {
         newData[
           'starts'
-        ] = `${section['form'].data['start_date']} ${section['form'].data['start_time']}`;
+        ] = `${section['form'].data['start_date']} ${section['form'].data['start_time']}:00`;
       } else if (section['form'].data['start_date']) {
         newData['starts'] =
           section['form'].data['start_date'] +
@@ -623,7 +627,8 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
       } else if (section['form'].data['start_time']) {
         newData['starts'] =
           this.campaign.data['starts_date_time'].substring(0, 10) +
-          section['form'].data['start_time'];
+          section['form'].data['start_time'] +
+          ':00';
       }
       this.campaign?.save(newData);
 
@@ -662,6 +667,38 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     this.sendRequest(url, method, formData);
   }
 
+  submitCampaign = async () => {
+    console.log('Submit Campaign');
+    let valid = true;
+    let url = '';
+    let data = {};
+
+    // Check all steps valid.
+    this.steps.forEach(step => {
+      if (step.name == 'preview') {
+        return;
+      }
+
+      const section = this.shadowRoot.querySelector(`#${step.name}[skhemata]`);
+      section['form'].validate();
+      if (!section['form'].valid) {
+        valid = false;
+      }
+    });
+    console.log(valid);
+
+    if (valid) {
+      this.saveCampaign().then(result => {
+        if (result) {
+          url = `${this.api.url}/campaign/${this.campaignId}`;
+          data = { entry_status_id: 10 };
+          this.sendRequest(url, 'put', JSON.stringify(data));
+        } else {
+        }
+      });
+    }
+  };
+
   async sendRequest(url, method, formData) {
     const skhemataToken = localStorage.getItem('skhemataToken');
     await fetch(url, {
@@ -682,16 +719,23 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
   }
 
   validateCampaign() {
+    let firstInvalid: HTMLElement;
     let valid = true;
 
     const section = this.shadowRoot.querySelector(
       `#${this.currentStep}[skhemata]`
     );
     section['form'].validate();
-    console.log(section);
     if (!section['form'].valid) {
       valid = false;
     }
+
+    firstInvalid = section['form'].querySelector('.is-danger');
+
+    if (firstInvalid != null) {
+      firstInvalid.focus();
+    }
+
     return valid;
   }
 
@@ -784,11 +828,15 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
     this.requestUpdate();
   }
 
+  // Try to save campaign, then go to next step.
   saveAndNavigate() {
-    if (this.saveCampaign()) {
-      const nextStepId = this.currentStepId + 1;
-      this.setCurrentStep(nextStepId);
-    }
+    this.saveCampaign().then(result => {
+      if (result) {
+        const nextStepId = this.currentStepId + 1;
+        this.setCurrentStep(nextStepId);
+      } else {
+      }
+    });
   }
 
   // async startCampaign() {
@@ -913,7 +961,6 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
                 <div class="modal-content">
                   <div class="box">
                     <p>Your changes have been saved!</p>
-                    <!-- Your content -->
                   </div>
                 </div>
                 <!-- <button class="modal-close is-large" aria-label="close"></button> -->
@@ -923,7 +970,32 @@ export class SkhemataCrowdfundingManager extends SkhemataBase {
             Your settings are saved.
           </div> -->
             `
-          : ''}
+          : html`
+              <div class="block is-pulled-right button-container">
+                <button class="button is-success" @click=${this.submitCampaign}>
+                  Launch Campaign
+                </button>
+              </div>
+
+              <div class="modal ">
+                <div
+                  class="modal-background"
+                  @click=${() => {
+                    if (this.shadowRoot) {
+                      const modal = this.shadowRoot.querySelector('.modal');
+                      if (modal) {
+                        modal.classList.toggle('is-active');
+                      }
+                    }
+                  }}
+                ></div>
+                <div class="modal-content">
+                  <div class="box">
+                    <p>Your campaign has been submitted!</p>
+                  </div>
+                </div>
+              </div>
+            `}
       `;
     } else {
       return html`<div class="spinnerWrapper">
